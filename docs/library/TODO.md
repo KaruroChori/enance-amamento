@@ -1,0 +1,2 @@
+I would like to generate the library of SDF primitives and operators automatically.  
+We already fields in the class definitions which can be leveraged, with some extra info it would be easy to also set up a scene, get a screenshot and prepare all files.

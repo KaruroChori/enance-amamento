@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Example of a low level tree structure for an SDF forest-->
+<forest>
+    <join label="$">
+        <smoothjoin factor="1">
+            <sphere radius="5">
+                <cfg idx="1" />
+            </sphere>
+            <translate offset="5|0|0">
+                <sphere radius="3">
+                    <cfg idx="2" />
+                </sphere>
+            </translate>
+        </smoothjoin>
+        <translate offset="5|5|0">
+            <box b="1|2|3">
+                <cfg idx="3" />
+            </box>
+        </translate>
+    </join>
+    <sphere label="spx-sphere" radius="5">
+        <cfg idx="1" />
+    </sphere>
+</forest>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Example of -->
+<demos>
+    <scene name="first">
+        <meta>
+            <desc>Embedded description</desc>
+        </meta>
+        <forest>
+            <box b="1|2|3" label="$"/>
+        </forest>
+        <camera type="projection">
+            <view zoom="1" position="0|10|0" rotation="0|0|0" pivot="0|0|0"/>
+        </camera>
+        <!--animation?-->
+    </scene>
+    <!--materials? effects?-->
+</demos>

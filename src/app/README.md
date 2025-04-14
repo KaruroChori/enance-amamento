@@ -1,0 +1,1 @@
+Main application used for debugging and visualization of `enance-amamento`.

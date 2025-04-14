@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/Taywee/args
+revision = 6.4.7
+depth = 1
+method = meson
+[provide]
+args = args_dep

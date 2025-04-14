@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/martinus/nanobench
+revision = v4.3.11
+depth = 1
+method = cmake
+[provide]
+nanobench = nanobench_dep

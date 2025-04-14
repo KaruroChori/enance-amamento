@@ -1,0 +1,4 @@
+option('tests', type: 'boolean', value: true)
+option('benchmarks', type: 'boolean', value: true)
+option('offload-targets', type: 'string', value: 'amd64-linux-unknown') #nvptx-64 for nvidia
+option('minimal', type: 'boolean', value: false)
