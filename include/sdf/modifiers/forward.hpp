@@ -19,6 +19,7 @@
 
 //TODO: A lot of this logic is designed to forward calls to the referenced node. This is an extremely touchy subject.
 //Ideally anything rendering related should. Still, this node must not disapper in the tree structure, so serialization/deserialization and fields should be its own.
+//For tree_idx it should use the global_buffer index and not a reference.
 
 namespace sdf{
 

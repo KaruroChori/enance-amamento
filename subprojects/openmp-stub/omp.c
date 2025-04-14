@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "openmp.h"
+#include "omp.h"
 
 #define OMP_STUBS_DEFAULT_DEVICE_NUM 0
 #define OMP_STUBS_DEVICE_NUM 0

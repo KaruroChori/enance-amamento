@@ -34,3 +34,11 @@ The application supports the following controls:
 - `esc` to toggle the overlay menu.
 
 If these shortcuts are not working, make sure you don't have an imgui window selected, as that will take focus.
+
+## Library configuration
+
+The behaviour of the library can be controlled using some preprocessor variables:
+- `SDF_DEFAULT_ATTRS` sets an alternative to `idx_attrs<true>` as default attributes for the SDF being computed.
+- `SDF_HEADLESS` set to `true` is used for situations where no serialization is supported (`to_xml` and similar) and no shared buffers are allocated. Useful for tests.
+- `SDF_IS_HOST` is used to specify if this compiled code should run on the host device or on an offloaded one.  
+  It should not be manually set, your build system is meant to configure it for you z.B. passing `-D SDF_IS_HOST=true -Xopenmp-target -D SDF_IS_HOST=false` as args.

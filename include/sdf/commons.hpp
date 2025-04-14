@@ -13,11 +13,11 @@
 #include <cmath>
 #include <concepts>
 #include <cstdint>
+#include <memory>
+#include <type_traits>
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
-#include <memory>
-#include <type_traits>
 
 #include "utils/tribool.hpp"
 
@@ -44,7 +44,7 @@
 #endif
 
 
-//#pragma omp declare target
+////Helper structs & Consts////
 
 namespace sdf{
 //Useful constants to keep rendering consistent.
@@ -141,9 +141,13 @@ enum class visibility_t{
 
 }
 
+////Tree Primitives////
+
 #define SDF_INTERNALS
     #include "tree.hpp"
 #undef SDF_INTERNALS
+
+////Interfaces////
 
 namespace sdf{
 

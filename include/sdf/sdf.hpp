@@ -190,7 +190,11 @@ struct color_attrs{
 }
 
 namespace sdf{
+    #ifdef SDF_DEFAULT_ATTRS
+    typedef idx_attrs<true> SDF_DEFAULT_ATTRS;
+    #else
     typedef idx_attrs<true> default_attrs;
+    #endif
 
     //TODO complete helpers here
     template<field_t::type_t TYPE >
