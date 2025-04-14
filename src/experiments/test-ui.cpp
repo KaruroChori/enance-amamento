@@ -23,7 +23,7 @@ namespace test1{
         auto t = Sphere({5.0}) + Sphere({6.0}) + Forward(d);
         d.radius=100;
         tree::builder N1;
-        N1.close(t.serialize(N1));
+        N1.close(t.to_tree(N1));
         auto w = N1.build();
         //return sdf::utils::root<sdf::default_attrs>(w)({0.5,0.5}).distance;
         return t({0.5,0.5,0.0}).distance;

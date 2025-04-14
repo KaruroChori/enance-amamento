@@ -20,7 +20,6 @@
 
 #define SDF_INTERNALS
 
-#include "tree.hpp"
 
 template <class T, template <class...> class Template>
 struct is_specialization : std::false_type {};

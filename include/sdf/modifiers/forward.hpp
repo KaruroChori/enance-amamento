@@ -17,6 +17,9 @@
 
 #include "../sdf.hpp"
 
+//TODO: A lot of this logic is designed to forward calls to the referenced node. This is an extremely touchy subject.
+//Ideally anything rendering related should. Still, this node must not disapper in the tree structure, so serialization/deserialization and fields should be its own.
+
 namespace sdf{
 
     namespace configs{
@@ -36,7 +39,12 @@ namespace sdf{
 
             constexpr inline void traits(traits_t& t) const{return src.traits(t); };
 
+            constexpr inline static const char* _name = "Forward";
             constexpr inline static field_t _fields[] = {};
+
+            constexpr inline const char* name()const{return _name;}
+            constexpr inline fields_t fields()const{return {_fields,sizeof(_fields)/sizeof(field_t)};}
+            constexpr inline visibility_t is_visible() const{return visibility_t::VISIBLE;}
         };
   
     }}
@@ -46,10 +54,16 @@ namespace sdf{
         struct Forward : impl_base::Forward<Attrs,Src,Args...>{
             using impl_base::Forward<Attrs,Src,Args...>::Forward;
             using typename impl_base::Forward<Attrs,Src,Args...>::attrs_t;
+            using impl_base::Forward<Attrs,Src,Args...>::fields;
 
-            uint16_t serialize(tree::builder& dst)const {
+            constexpr inline fields_t fields(const path_t* steps)const {
                 //TODO: Possibly revise this one. For now it copies.
-                return this->src.serialize(dst);
+                return this->src.fields(steps);
+            }
+
+            constexpr inline uint64_t to_tree(tree::builder& dst)const {
+                //TODO: Possibly revise this one. For now it copies.
+                return this->src.to_tree(dst);
             }
 
             bool to_cpp(ostream& dst) const{
@@ -80,11 +94,21 @@ namespace sdf{
 
             constexpr inline void traits(traits_t& t) const final{return src->traits(t); };
 
+            constexpr inline static const char* _name = "Forward";
             constexpr inline static field_t _fields[] = {};
 
-            uint16_t serialize(tree::builder& dst)const {
+            constexpr inline const char* name()const final{return _name;}
+            constexpr inline fields_t fields()const final{return {_fields,sizeof(_fields)/sizeof(field_t)};}
+            constexpr inline visibility_t is_visible()const final{return visibility_t::VISIBLE;}
+
+            constexpr inline fields_t fields(const path_t* steps)const final{
                 //TODO: Possibly revise this one. For now it copies.
-                return src->serialize(dst);
+                return src->fields(steps);
+            }
+
+            uint64_t to_tree(tree::builder& dst)const final{
+                //TODO: Possibly revise this one. For now it copies.
+                return src->to_tree(dst);
             }
 
             bool to_cpp(ostream& dst) const final{
@@ -103,18 +127,6 @@ namespace sdf{
 
     }}
 
-    namespace comptime_base {
-        template <typename Attrs=default_attrs, template<typename, typename... Args> typename Src, typename... Args>
-        constexpr inline impl_base::Forward<Attrs, Src, Args...> Forward ( const Src<Attrs,Args...>& ref ){
-            return ref;
-        }
-    }
-    namespace polymorphic_base {
-        template <typename Attrs, template<typename, typename... Args> typename Src, typename... Args>
-        constexpr inline impl_base::Forward<Attrs, Src, Args...> Forward ( const utils::dyn<Attrs,Src,Args...>& ref  ){
-            return ref; 
-        }
-    }
     namespace comptime {
         template <typename Attrs=default_attrs, template<typename, typename... Args> typename Src, typename... Args>
         constexpr inline impl::Forward<Attrs, Src, Args...> Forward ( const Src<Attrs,Args...>& ref ){

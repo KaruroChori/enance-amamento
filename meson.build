@@ -49,3 +49,7 @@ endif
 if get_option('benchmarks') == true
   subdir('benchmarks')
 endif
+
+if get_option('tests') == true
+  subdir('tests')
+endif

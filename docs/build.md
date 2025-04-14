@@ -1,4 +1,6 @@
-You will need a recent version of `meson` as a build system, and a proper toolchain compiled with support for OpenMP (make sure it matches your target architecture).  
+## Requirements & toolchains
+
+You will need a recent version of `meson` as then build system, and a proper toolchain compiled with support for OpenMP (make sure it matches your target architecture).  
 At the moment, only clang-21 has been tested and is the one used for development, but 20 should work just fine.  
 `gcc` is not supported/tested, and would require some changes in the build script as its arguments are not the same as for `clang`.  
 If you really want, make sure you are using the special branch with offloading patches for `gcc-14` or `gcc-15`.  
@@ -6,6 +8,8 @@ If you really want, make sure you are using the special branch with offloading p
 If no support for OpenMP is available, there is a stub implementation in the subprojects, but it has not been tested nor integrated in the build systems as of yet.  
 Also, while the main library has no external dependency aside from those directly handled by meson, some utilities like the main UI do.  
 Make sure `sdl3` is installed on your system if you want to build and run them.
+
+## Building
 
 Instead of working directly with meson, you can use the provided `Makefile` to run simplified commands.  
 Just remember to configure your environment based on your needs/machine.  
@@ -16,6 +20,8 @@ For example, on my system:
 ```bash
 make run OFFLOAD=nvptx64
 ```
+
+## Demo UI interface
 
 The application supports the following controls:
 - Right click for contextual menu

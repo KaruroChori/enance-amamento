@@ -20,7 +20,7 @@ float sdf_sphere(vec3 center, float radius, vec3 position){
 Compared to meshes or voxels, SDFs have $\infty$[^1] resolution. This is similar when comparing rasterized images against vector formats like SVG[^2].  
 Thanks to SDFs, several interesting operations which are hard to describe in terms of meshes, have a much simpler and elegant representation:
 
-- Boolean operators like union and intersection of parts, including soft variants are reduced to $min$/$max$ functions.
+- Boolean operators like union and intersection of parts, including soft variants are reduced to $min$ or $max$ functions.
 - Normal calculations can be exactly resolved via symbolic methods.
 - Periodic repetitions
 - Extrusion and revolutions
@@ -64,7 +64,9 @@ However, this simplified portability is not for free:
 
 - Compiling shaders takes time, making the application less reactive in some scenarios.
 - Shader languages are not C, C++ nor rust. If one wants to target pure CPU computing as well, they will need to write code twice, or transpile it from the shader language into their native platform.
-- Shader languages are very incomplete and limited compared to modern C++. The get some points thanks to their domain specific nature, but nothing operator overloads like in [glm](https://github.com/g-truc/glm) cannot do.
+- Shader languages are very incomplete and limited compared to modern C++. They get some points thanks to their domain specific nature, but nothing operator overloads like in [glm](https://github.com/g-truc/glm) cannot do.
+
+OpenMP allows for an implementation which has no code duplication in different languages, keeping vendor neutrality without any real compromise at runtime.
 
 ## Building
 
@@ -82,7 +84,7 @@ Detailed instructions for building [here](./docs/build.md).
 
 ### Core libraries
 
-Main libraries which are enabling this project:
+Main libraries/specs which are enabling this project:
 
 - [OpenMP](https://www.openmp.org/)
 - [glm](https://github.com/g-truc/glm) to write most code in the style of glsl or even reuse it almost 1-to-1

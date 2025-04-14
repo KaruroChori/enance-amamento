@@ -10,9 +10,12 @@ To be fast, the final application based on this library should use one or more o
 
 > Regardless, rendering is slow.
 
-We are not leveraging the hardware-based rendering capabilities of you GPU. So yes, that type of optimization and the raytraced nature of the algorithms involved make this implementation computationally expensive. And also the fact code is not fully optimized.
+We are not leveraging the hardware-based rendering capabilities of modern GPUs.  
+So yes, the raytraced nature of the algorithms and its lack of hardware support makes the final implementation computationally expensive.  
+This is actually fine. Just because rendering an SDF via raymarching is slow, it does not mean we cannot generate more compute-friendly representations.  
+Many operations are so cheap for SDF that they offset the complexity of any sampling needed to construct those alternative representations.
 
 > Why OpenMP? Why not simply vulkan?
 
-For portability. This code is nothing special, the library can safely run on very small ARM processors with next to no memory, and scale up to a single CPU with 20 GPUs attached.
+For portability. This code is nothing special, the library can safely run on very small ARM processors with next to no memory, and scale up to multi-socket motherboards with 20 GPUs attached.
 

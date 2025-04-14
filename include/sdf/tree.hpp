@@ -4,7 +4,7 @@
 #error Don't import manually, this can only be used internally by the library
 #endif
 
-#include "sdf/sdf.hpp"
+#include "commons.hpp"
 #include "utils/shared.hpp"
 #include <cstdint>
 #include <cstring>

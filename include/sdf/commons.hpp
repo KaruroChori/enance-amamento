@@ -139,6 +139,14 @@ enum class visibility_t{
     SKIP,       //Ignore the current node, but render children (as union)
 };
 
+}
+
+#define SDF_INTERNALS
+    #include "tree.hpp"
+#undef SDF_INTERNALS
+
+namespace sdf{
+
 /**
  * @brief Interface to be a valid attribute type for the sdf.
  * 
@@ -163,7 +171,7 @@ template<typename T>
 concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     const T self, glm::vec2 pos2d, glm::vec3 pos3d, 
     traits_t traits, ostream& ostrm, xml& oxml, 
-    const path_t* paths
+    const path_t* paths, tree::builder& otree
 ){
     {self.operator()(pos3d)} -> std::same_as<typename T::attrs_t>;
     {self.sample(pos3d)} -> std::convertible_to<float>;
@@ -173,12 +181,10 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     {self.fields(paths)} -> std::same_as<fields_t> ;
     {self.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.to_xml(oxml)} -> std::same_as<bool> ;
+    {self.to_tree(otree)} -> std::same_as<uint64_t> ;
     //{self.from_xml(oxml)} -> std::same_as<bool> ;
-    //TODO: Add to_tree
 
-    //TODO: Add hidden() to support the optional modifier
     {self.is_visible()} -> std::same_as<visibility_t> ;
-
 };
 
 }
