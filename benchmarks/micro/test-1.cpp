@@ -12,8 +12,8 @@ int main() {
         double d = 1.0;
         ankerl::nanobench::Bench().minEpochIterations(1).run("some double ops", [&] {
             for(int i=0;i<4000;i++)
-            for(int j=0;j<2000;j++)
-                d+=sdf_a({i,j,0.0}).distance;
+                for(int j=0;j<2000;j++)
+                    d+=sdf_a({i,j,0.0}).distance;
             ankerl::nanobench::doNotOptimizeAway(d);
         });
     }
@@ -23,8 +23,8 @@ int main() {
         ankerl::nanobench::Bench().minEpochIterations(1).run("some double ops", [&] {
             #pragma omp parallel for simd collapse(2) reduction(+:d)
             for(int i=0;i<4000;i++)
-            for(int j=0;j<2000;j++)
-                d+=sdf_a({i,j,0.0}).distance;
+                for(int j=0;j<2000;j++)
+                    d+=sdf_a({i,j,0.0}).distance;
             ankerl::nanobench::doNotOptimizeAway(d);
         });
     }
@@ -34,8 +34,8 @@ int main() {
         ankerl::nanobench::Bench().minEpochIterations(1).run("some double ops", [&] {
             #pragma omp teams distribute parallel for  collapse(2) reduction(+:d)
             for(int i=0;i<4000;i++)
-            for(int j=0;j<2000;j++)
-                d+=sdf_a({i,j,0.0}).distance;
+                for(int j=0;j<2000;j++)
+                    d+=sdf_a({i,j,0.0}).distance;
             ankerl::nanobench::doNotOptimizeAway(d);
         });
     }
@@ -45,8 +45,8 @@ int main() {
         ankerl::nanobench::Bench().minEpochIterations(1).run("some double ops", [&] {
             #pragma omp target teams distribute parallel for collapse(2) reduction(+:d)
             for(int i=0;i<4000;i++)
-            for(int j=0;j<2000;j++)
-                d+=sdf_a({i,j,0.0}).distance;
+                for(int j=0;j<2000;j++)
+                    d+=sdf_a({i,j,0.0}).distance;
             ankerl::nanobench::doNotOptimizeAway(d);
         });
     }

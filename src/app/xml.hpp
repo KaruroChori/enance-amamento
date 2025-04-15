@@ -86,11 +86,13 @@ struct parse_xml{
     private:
 
     std::stack<typename Attrs::extras_t> tmp_extras;
-    std::map<std::string,std::shared_ptr<sdf::utils::base_dyn<Attrs>>,std::less<void>> forest;
+    std::map<std::string,uint64_t> named;   //Any named entity, regardless of nesting
+    std::map<uint64_t,std::shared_ptr<sdf::utils::base_dyn<Attrs>>,std::less<void>> index;   //Any entity
+    std::map<std::string,std::shared_ptr<sdf::utils::base_dyn<Attrs>>,std::less<void>> forest;  //Only top levels
+
     std::string root_label;
 
     App::treeview_t ui_tree;
-    std::map<uint64_t,std::shared_ptr<sdf::utils::base_dyn<Attrs>>> uid_map;
     uint64_t next_uid=0;
 
     struct nodes_t{
@@ -332,6 +334,8 @@ struct parse_xml{
         auto node_label = root.attribute("label").as_string(nullptr);
         next_uid++;
         base.ui.label=std::format("{}({})##{}",node_label!=nullptr?std::format("{} ",node_label):std::string(""), root.name(),next_uid);
+        if(node_label!=nullptr)named.emplace(std::string(node_label),next_uid);
+        index.emplace(next_uid,base.sdf);
         base.ui.ctx=next_uid;
         return base;
     }

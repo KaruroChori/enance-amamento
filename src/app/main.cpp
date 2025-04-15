@@ -75,7 +75,7 @@ int main(int argc, const char** argv) {
     }
 
     fromXML->to_cpp((sdf::ostream&)std::cout);
-
+ 
     sdf::tree::builder builder; 
     builder.close(fromXML->to_tree(builder));
     if(!builder.make_shared(2))throw "CannotBuild";

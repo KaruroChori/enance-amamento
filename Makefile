@@ -13,6 +13,8 @@ TOOLCHAIN ?= platforms/clang.ini
 
 OFFLOAD ?= amd64-linux-unknown
 
+NO_OMP ?= false
+
 .PHONY: all configure build install dist test clean
 
 # Run all steps by default.
@@ -21,7 +23,7 @@ all: configure build install
 # Configure step.
 configure:
 	@echo "Configuring project with $(MESON) (build type: $(BUILDTYPE))..."
-	$(MESON) setup $(BUILD_DIR) -Doffload-targets=$(OFFLOAD) --reconfigure --prefix=$(PREFIX) --buildtype=$(BUILDTYPE) --native-file $(TOOLCHAIN) 
+	$(MESON) setup $(BUILD_DIR) -Dno-omp=$(NO_OMP) -Doffload-targets=$(OFFLOAD) --reconfigure --prefix=$(PREFIX) --buildtype=$(BUILDTYPE) --native-file $(TOOLCHAIN) 
 
 # Build step depends on configuration.
 build: configure

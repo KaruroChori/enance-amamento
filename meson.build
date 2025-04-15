@@ -10,13 +10,26 @@ add_global_arguments(
   language: ['cpp', 'c'],
 )
 
-openmp_compile_args = [
-  '-D SDF_IS_HOST=true',
-  '-fopenmp',
-  '-g',
-  '-fopenmp-targets=' + get_option('offload-targets'),
-  '-fopenmp-cuda-mode', '-Xopenmp-target', '-D SDF_IS_HOST=false'
-]
+openmp_stub_dep = dependency('openmp_stub')
+
+if get_option('no-omp') == true
+  deps_no_omp = [openmp_stub_dep]
+
+  openmp_compile_args = [
+    '-D SDF_IS_HOST=true',
+  ]
+
+else
+  deps_no_omp = []
+  openmp_compile_args = [
+    '-D SDF_IS_HOST=true',
+    '-fopenmp',
+    '-g',
+    '-fopenmp-targets=' + get_option('offload-targets'),
+    '-fopenmp-cuda-mode', '-Xopenmp-target', '-D SDF_IS_HOST=false'
+  ]
+endif 
+
 
 #TODO: this override of SDF_IS_HOST is not clean while compiling as it is passed twice for target code.
 

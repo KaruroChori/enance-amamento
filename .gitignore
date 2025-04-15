@@ -3,6 +3,7 @@
 /build/ 
 /build.*/
 /subprojects/*
+!/subprojects/omp_stub.wrap
 !/subprojects/lua.wrap
 !/subprojects/args.wrap
 !/subprojects/glm.wrap

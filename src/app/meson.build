@@ -13,6 +13,7 @@ rr = executable(
         lua_dep,
         pugixml_dep, #To be removed once the xml loade is done?
         args_dep,
+        deps_no_omp
     ],
 )
 

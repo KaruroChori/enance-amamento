@@ -1,0 +1,4 @@
+[wrap-file]
+directory = openmp-stub
+[provide]
+openmp_stub = openmp_stub_dep
