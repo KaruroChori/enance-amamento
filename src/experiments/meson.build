@@ -9,7 +9,7 @@
         imgui_dep,
         sdl3_dep,
         vssdf_ui_dep,
-
+        deps_no_omp
     ],
     link_with: [],
 )
@@ -20,7 +20,7 @@ executable(
     install: false,
     cpp_args: [openmp_compile_args],
     link_args: [openmp_link_args],
-    dependencies: [],
+    dependencies: [deps_no_omp],
     link_with: [],
 )
 
@@ -30,6 +30,16 @@ executable(
     install: false,
     cpp_args: [openmp_compile_args],
     link_args: [openmp_link_args],
-    dependencies: [],
+    dependencies: [deps_no_omp],
+    link_with: [],
+)
+
+executable(
+    'comptime-render',
+    'comptime-render.cpp',
+    install: false,
+    cpp_args: [openmp_compile_args],
+    link_args: [openmp_link_args],
+    dependencies: [vssdf_dep, deps_no_omp],
     link_with: [],
 )

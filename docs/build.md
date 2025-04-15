@@ -13,6 +13,7 @@ Make sure `sdl3` is installed on your system if you want to build and run them.
 
 Instead of working directly with meson, you can use the provided `Makefile` to run simplified commands.  
 Just remember to configure your environment based on your needs/machine.  
+Check `Makefile` for more details.
 If you don't have `clang-21` installed you might have to change the default `platform` file.
 
 For example, on my system:
@@ -20,6 +21,19 @@ For example, on my system:
 ```bash
 make run OFFLOAD=nvptx64
 ```
+
+If you want to use your CPU as offloaded device
+
+```bash
+make run OFFLOAD=amd64 #Or match your architecture.
+```
+
+If you want to build a version without omp support at all (it will be very slow)
+
+```bash
+make run NO_OMP=true
+```
+
 
 ## Demo UI interface
 

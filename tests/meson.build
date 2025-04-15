@@ -7,6 +7,7 @@ test('test-sdf',executable(
     dependencies: [
         vssdf_dep,
         glm_dep,
+        deps_no_omp
     ],
     link_with: [],
 ))

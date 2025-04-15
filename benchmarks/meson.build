@@ -4,7 +4,7 @@ mp = executable(
     install: false,
     cpp_args: [openmp_compile_args],
     link_args: [openmp_link_args],
-    dependencies: [nanobench_dep, vssdf_dep],
+    dependencies: [nanobench_dep, vssdf_dep, deps_no_omp],
 
 )
 
