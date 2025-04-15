@@ -140,8 +140,8 @@ struct base{
         auto [d,i] = march(ro,rd,hint);
         //vec3 p = ro + rd*d.distance;
 
-        //TODO: not infinity or it breaks computation of sobel there. Replace manually added value with a SKY const, issue @ https://github.com/llvm/llvm-project/issues/132342.
-        if(d.distance>MAX_DIST)return {{.uid=0,.gid=511,.idx=0,}/*SDF::attrs_t::SKY*/,MAX_DIST,d.normals,i}; 
+        //Not infinity or it breaks computation of sobel there.
+        if(d.distance>MAX_DIST)return {SDF::attrs_t::SKY(),MAX_DIST,d.normals,i}; 
         return {{d.fields},d.distance,d.normals,i};//.light=vec3(light(p,d.normals))
     }
 

@@ -34,21 +34,6 @@ If you want to build a version without omp support at all (it will be very slow)
 make run NO_OMP=true
 ```
 
-
-## Demo UI interface
-
-The application supports the following controls:
-- Right click for contextual menu
-- `shift` + `left-click` + movement is panning
-- `ctrl` + `left-click` + movement is rotating
-- `middle-click` to set the pivot point
-- `scroll` to move in or out.
-- Numpad digits to rotate at fixed positions.
-- `home` to reset all camera tranforms.
-- `esc` to toggle the overlay menu.
-
-If these shortcuts are not working, make sure you don't have an imgui window selected, as that will take focus.
-
 ## Library configuration
 
 The behaviour of the library can be controlled using some preprocessor variables:

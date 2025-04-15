@@ -1,4 +1,4 @@
-image_gen = executable(
+headless_renderer = executable(
     'image-gen',
     ['main.cpp','shared-slots.cpp'],
     install: true,

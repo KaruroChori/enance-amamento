@@ -114,7 +114,7 @@ struct idx_attrs{
         }
     };
     
-    constexpr static inline const extras_t SKY={0,511,0,true};
+    consteval static extras_t SKY(){return extras_t{0,511,0,true};}
 
     float distance;
     glm::vec3 normals;
@@ -173,8 +173,8 @@ struct color_attrs{
         }
     };
 
-    constexpr static inline const extras_t SKY={44,30,212,255};
-
+    consteval static extras_t SKY(){return extras_t{44,30,212,255};}
+    
     float distance;
     glm::vec3 normals;
 

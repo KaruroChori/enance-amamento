@@ -19,3 +19,9 @@ Many operations are so cheap for SDF that they offset the complexity of any samp
 
 For portability. This code is nothing special, the library can safely run on very small ARM processors with next to no memory, and scale up to multi-socket motherboards with 20 GPUs attached.
 
+> Compiling for nvidia cards triggers some warnings 
+
+```
+nvlink warning : Stack size for entry function '__omp_offloading_fd00_7445f2a__ZN8pipeline4demoIN3sdf12_GLOBAL__N_14impl11InterpretedINS1_9idx_attrsILb1EEEEELb0EE7raycastERKN3glm3vecILi2EfLNS9_9qualifierE0EEE_l140' cannot be statically determined
+```
+or something of that sort. Yes that is correct, we are defining kernels for which the stack size is not known at compile time. As some point I will look for a way to silence those warnings.

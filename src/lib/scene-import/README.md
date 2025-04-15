@@ -1,0 +1,1 @@
+Extra library to read XML scene files. Since multiple utilities might use it I decided to package it as its own library.

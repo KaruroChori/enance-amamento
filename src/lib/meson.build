@@ -6,7 +6,6 @@ vssdf = library(
         'sdf/sdf.cpp',
         'sdf/codegen.cpp',
         'sdf/serialize.cpp',
-        'utils/texture.cpp',
     ],
     install: true,
     cpp_args: [openmp_compile_args],
@@ -38,17 +37,17 @@ vssdf_ui_dep = declare_dependency(
     link_with: vssdf_ui,
 )
 
-vssdf_xml = library(
-    'vssdf_xml',
+vssdf_scene_import = library(
+    'vssdf_scene_import',
     [
-        'utils/xml.cpp',
+        'scene-import/scene.cpp',
     ],
     install: true,
     dependencies: [pugixml_dep, vs_templ_dep, vssdf_dep],
     include_directories: include_dirs,
 )
 
-vssdf_xml_dep = declare_dependency(
+vssdf_scene_import_dep = declare_dependency(
     include_directories: include_dirs,
-    link_with: vssdf_xml,
+    link_with: vssdf_scene_import,
 )

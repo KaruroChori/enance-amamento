@@ -20,6 +20,7 @@ int main(){
     {
         using namespace sdf::comptime;
         test(Sphere({5.0}),-5.0f);
+        test(Sphere_t<sdf::color_attrs>({5.0}),-5.0f);
     }
 
     return 0;

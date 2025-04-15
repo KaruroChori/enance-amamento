@@ -1,0 +1,1 @@
+Libraries composing `enance-amamento`. They are to be linked separately in final applications.

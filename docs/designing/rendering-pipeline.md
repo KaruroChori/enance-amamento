@@ -6,7 +6,7 @@ Features wanted from the demo renderer:
 - [ ] ~~Support for two lights, a sun and a point-light attached to the camera~~
 - [ ] Ambient occlusion
 - [x] Indexed based material
-- [ ] Transparency (hash and exact)
+- [ ] Transparency (hash and exact (blended?))
 - [x] Edges highlight / border (to be extended)
 - [x] Material feathering (hash)
 
