@@ -1,4 +1,4 @@
-XML files to describe SDF.
+XML files to describe SDF. Implementation split in its own library. It will be probably based on part of the code from vs.
 
 ```xml
 <xml>

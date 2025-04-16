@@ -1,9 +1,9 @@
 Features wanted from the demo renderer:
 
-- [ ] Orthogonal
+- [ ] Orthogonal projection
 - [x] and Perspective projections
 - [ ] Some form of anti-aliasing
-- [ ] ~~Support for two lights, a sun and a point-light attached to the camera~~
+- [ ] ~~Support for two lights, a sun and a point-light attached to the camera~~ no real light for the demo renderer
 - [ ] Ambient occlusion
 - [x] Indexed based material
 - [ ] Transparency (hash and exact (blended?))

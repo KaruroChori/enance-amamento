@@ -157,13 +157,13 @@ namespace sdf{
  * @tparam T 
  */
 template<typename T>
-concept attrs_i = requires(const T& self, const T& self2, ostream& ostrm, xml& oxml){
+concept attrs_i = requires(const T& self, const T& self2, ostream& ostrm, xml& oxml, const xml& ixml, T::extras_t& defattrs){
     std::is_same<decltype(self.distance),float>();
     std::is_same<decltype(self.fields),typename T::extras_t>();
     {self+self2} -> std::convertible_to<typename T::extras_t> ;
     {self.fields.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.fields.to_xml(oxml)} -> std::same_as<bool> ;
-    //{self.fields.from_xml(oxml)} -> std::same_as<bool> ;
+    //{self.fields.from_xml(ixml, defattrs)} -> std::same_as<bool> ;
 };
 
 /**

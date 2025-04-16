@@ -191,7 +191,7 @@ struct color_attrs{
 
 namespace sdf{
     #ifdef SDF_DEFAULT_ATTRS
-    typedef idx_attrs<true> SDF_DEFAULT_ATTRS;
+    typedef SDF_DEFAULT_ATTRS default_attrs;
     #else
     typedef idx_attrs<true> default_attrs;
     #endif
@@ -213,11 +213,6 @@ namespace sdf{
         auto fields = paths==nullptr?node.fields():node.fields(paths);
 
         return false;
-    }
-
-
-    //Filled in with operator-specific comfiguration structures
-    namespace configs{
     }
 
     namespace utils{
@@ -561,7 +556,9 @@ namespace sdf{
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 
-    //TODO: Direct dependencies from configs::XXX have been remvoed in operator_1 to allow arbitrary (template) cfg. Adapt here as well first time this is needed for a binary operator.
+    //TODO: Direct dependencies from configs::XXX have been removed in operator_1 to allow arbitrary (template) cfg. 
+    //      Adapt here as well first time this is needed for a binary operator.
+
     /// Used to record a binary operator `NAME` across all namespaces
 
     #if SDF_IS_HOST==true
@@ -591,7 +588,7 @@ namespace sdf{
             uint64_t to_tree(tree::builder& dst)const;                                                              \
             bool to_cpp(ostream& out) const;                                                                        \
             bool to_xml(xml& out) const;                                                                            \
-            using impl_base::NAME<A,B>::fields;                                                                   \
+            using impl_base::NAME<A,B>::fields;                                                                     \
             inline fields_t fields(const path_t* steps) const;                                                      \
             using impl_base::NAME<A,B>::NAME;                                                                       \
             using typename impl_base::NAME<A,B>::base;                                                              \
@@ -627,8 +624,8 @@ namespace sdf{
             sdf_register_operator_2_ostream(NAME);                                                                  \
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
-        bool  NAME <A,B> :: to_xml(xml& dst)const {                                                     \
-            sdf_register_operator_2_xml(NAME); \
+        bool  NAME <A,B> :: to_xml(xml& dst)const {                                                                 \
+            sdf_register_operator_2_xml(NAME);                                                                      \
         }                                                                                                           \
     }}                                                                                                              \
     namespace comptime {                                                                                            \
@@ -690,7 +687,7 @@ namespace sdf{
         #define sdf_register_operator_1_ostream(NAME) \
             dst<< #NAME "(";                                                                                    \
             base::left().to_cpp(dst);                                                                           \
-            if(sizeof(NAME<A>::_fields)!=0){                                                                 \
+            if(sizeof(NAME<A>::_fields)!=0){                                                                    \
                 dst<<", {";                                                                                     \
                 if(!codegen::to_cpp_from_fields(dst, *this, false))return false;                                \
                 dst<<"}";                                                                                       \
@@ -925,6 +922,7 @@ namespace sdf{
 #include "operators/rotate.hpp"
 #include "operators/scale.hpp"
 
+//TODO: this might be unlocked for not host targets if the global buffers are used to store the actual pointers as it was done in the following data structures.
 #if SDF_IS_HOST==true
 #include "special/dynlib.hpp"
 #endif
@@ -1070,17 +1068,11 @@ namespace utils{
         return;
     }
     
-
-    //TODO: Review to operate following the rest of the implementation
     template<typename Attrs>
     utils::tree_idx<Attrs>* root(sdf::tree::instance& ctx, int device){
-        //auto base = (uint8_t*)ctx.bytes.get(device);
-        //#pragma omp target device(device)
-        //{utils::tree_idx_base::base = base;}
-    
         uint32_t offset;
         memcpy(&offset,ctx.bytes.get(),4 );
-        printf("YOOO root is %d at %p\n",offset,(uint8_t*)ctx.bytes.get(device)+offset);
+        //printf("YOOO root is %d at %p\n",offset,(uint8_t*)ctx.bytes.get(device)+offset);
         return (utils::tree_idx<Attrs>*)((uint8_t*)ctx.bytes.get(device)+offset);
     }
 }
