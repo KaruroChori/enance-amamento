@@ -74,7 +74,7 @@ Detailed instructions for building [here](./docs/build.md).
 
 ![screenshot](./docs/editor-screenshot.png)
 
-## Prior arts & dependencies
+## Prior art & dependencies
 
 ### Resources
 
@@ -104,6 +104,7 @@ Libraries which are not part of the library, or they are just marginally used fo
 Not used directly, but broader inspiration.
 
 - [hg_sdf](https://mercury.sexy/hg_sdf/) a library of operators for glsl.
+- [libfive](https://github.com/libfive/libfive) a powerful library for solid modelling.
 
 [^0]: 2D and 3D only, my deepest apologies to any of my higher dimensional friend.
 [^1]: Sort of, floating point numbers have limited precision, but it is INFINITY in their "true" mathematical representation. Also, for infinite resolution I mean that you can have very fine fractal or noise structures without tricks like baking textures.

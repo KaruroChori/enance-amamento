@@ -9,5 +9,4 @@ test('test-sdf',executable(
         glm_dep,
         deps_no_omp
     ],
-    link_with: [],
 ))

@@ -30,7 +30,6 @@ else
   ]
 endif 
 
-
 #TODO: this override of SDF_IS_HOST is not clean while compiling as it is passed twice for target code.
 
 openmp_link_args = openmp_compile_args
@@ -46,7 +45,7 @@ imgui_dep = dependency('imgui')
 implot_dep = dependency('implot')
 lua_dep = dependency('lua')
 pugixml_dep = dependency('pugixml', version: '>=1.14')
-vs_templ_dep = dependency('vs_templ', version: '>=0.4.5')
+vs_templ_dep = dependency('vs_templ', version: '>=0.4.7')
 args_dep = dependency('args')
 
 #png_dep = dependency('libpng')

@@ -905,6 +905,8 @@ namespace sdf{
 #include "modifiers/forward.hpp"
 #include "modifiers/optional.hpp"
 #include "modifiers/located.hpp"
+#include "modifiers/material.hpp"
+#include "modifiers/lod.hpp"
 
 //Boolean operators
 #include "operators/boolean/join.hpp"
@@ -929,7 +931,6 @@ namespace sdf{
 #include "special/interpreted.hpp"
 #include "special/octa-sampled-3d.hpp"
 #include "special/octa-sampled-2d.hpp"
-#include "special/material.hpp"
 
 
 //Construction
@@ -1068,13 +1069,13 @@ namespace utils{
         return;
     }
     
-    template<typename Attrs>
+    /*template<typename Attrs>
     utils::tree_idx<Attrs>* root(sdf::tree::instance& ctx, int device){
         uint32_t offset;
         memcpy(&offset,ctx.bytes.get(),4 );
         //printf("YOOO root is %d at %p\n",offset,(uint8_t*)ctx.bytes.get(device)+offset);
         return (utils::tree_idx<Attrs>*)((uint8_t*)ctx.bytes.get(device)+offset);
-    }
+    }*/
 }
 }
 

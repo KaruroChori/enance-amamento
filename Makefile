@@ -47,7 +47,7 @@ dist: install
 run: configure
 	@echo "Running with default env vars"
 	$(MESON) compile editor -C $(BUILD_DIR)
-	LIBOMPTARGET_STACK_SIZE=2048 ./build/src/app/editor 
+	LIBOMPTARGET_STACK_SIZE=2048 ./build/src/app/enamento-demo 
 
 # Clean up the build directory.
 clean:

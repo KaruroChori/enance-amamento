@@ -267,7 +267,7 @@ if (ImGui::BeginChild("PropertiesChild", ImVec2(0, 0), false))
             ImGui::Text("Basic fields");
                 ui::RenderCfgFields(buffer);
             ImGui::Text("Custom fields");
-                ui::RenderFields(sdf::comptime::Demo_t<sdf::default_attrs>::_fields,sizeof(sdf::comptime::Demo_t<sdf::default_attrs>::_fields)/sizeof(sdf::field_t),buffer);
+                //ui::RenderFields(sdf::comptime::Demo_t<sdf::default_attrs>::_fields,sizeof(sdf::comptime::Demo_t<sdf::default_attrs>::_fields)/sizeof(sdf::field_t),buffer);
         }
     }
     ImGui::EndChild();

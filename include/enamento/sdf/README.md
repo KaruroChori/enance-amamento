@@ -13,6 +13,7 @@ This section of the library provides all the basic SDF functionality.
 - `octa-tree` (both 2D and 3D variants) computed from a dynamically loaded data source. (fast)
 - `interpreted` (based on `tree-idx`) resolved as an explicit tree structure on a linear memory layout, dynamically computed and resolved. (slowest, only meant as placeholder before a compiled version is made available)
 - `dynlib` resolved from a dynamic library, usually built as comptime. It requires runtime support for generation. (faster)
+- `optimized` is a dynamic switch between `octa-tree`, `interpreted` and `dynlib`.
 
 | **Name**    | **Sampling speed** | **Generation speed** | **Memory**  | **Mutable (Structure)** | **Mutable (Fields)** | **Serializable** |
 |-------------|--------------------|----------------------|-------------|-------------------------|----------------------|------------------|

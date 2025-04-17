@@ -1,0 +1,1 @@
+This is meant to be a header-only library, so it would be a good idea to keep the implementation code on the other side, and let the user of the library handle anything else (like the global_shared array).

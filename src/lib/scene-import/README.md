@@ -1,1 +1,2 @@
-Extra library to read XML scene files. Since multiple utilities might use it I decided to package it as its own library.
+Extra library to read XML scene files. Since multiple utilities might use it I decided to package it as its own library.  
+It also handles the Lua bindings used to describe animations in script sections.

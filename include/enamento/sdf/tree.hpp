@@ -22,18 +22,20 @@ namespace tree{
 
 namespace op_t {
     enum type_t : uint16_t{
-        //PRIMITIVES
+        //Primitives
         Zero = 0x1,
         Demo,
-        OctaSampled3D,
         Sphere,
         Box,
         Plane,
 
+        //Special
+        OctaSampled3D,
+
         //Modifiers
         Material,
 
-        //OPERATORS
+        //Operators
         Join = 128,
         Cut,
         Common,
@@ -51,32 +53,6 @@ namespace op_t {
         Optional = 0x200,
         LOD = 0x400,
     };
-};
-
-struct instance{
-
-    struct named_t{
-        uint16_t gid;
-        uint16_t uid;
-        uint16_t idx;
-    };
-    
-    shared bytes;
-    shared map;
-
-
-    /*uint8_t*    bytes = nullptr;
-    size_t      bytes_size = 0;
-    named_t*    map = nullptr;    //Index to quickly find an object
-    size_t      map_size = 0; */
-
-    instance(const std::vector<uint8_t>& nbytes, const  std::map<std::pair<uint16_t,uint16_t>,uint16_t>& nmap):bytes(nbytes.size()),map(nmap.size()*sizeof(instance::named_t)){
-            bytes.provide((void*)nbytes.data());
-            int j=0;
-    }
-    
-    ~instance(){}
-
 };
 
 struct builder{
@@ -108,10 +84,6 @@ struct builder{
     uint64_t next(){
         return offset;
     }
-
-    /*instance build(){
-        return {bytes, named_refs};
-    }*/
 
     bool build(){
         return true;

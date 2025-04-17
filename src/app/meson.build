@@ -1,5 +1,5 @@
 rr = executable(
-    'editor',
+    'enamento-demo',
     ['main.cpp','shared-slots.cpp','lua-script.cpp'],
     install: true,
     cpp_args: [openmp_compile_args],

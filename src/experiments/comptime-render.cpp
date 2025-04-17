@@ -29,8 +29,8 @@ constexpr std::array<std::array<sdf::default_attrs, COLS>, ROWS> render(const au
 }
 
 //TODO: this fails because the math library is not constexpr in c++23 & clang-21 :(
-constexpr auto fn = sdf::comptime::Sphere_t<sdf::default_attrs>(5);
-constexpr auto image = render(fn);
+/*constexpr*/ auto fn = sdf::comptime::Sphere_t<sdf::default_attrs>(5);
+/*constexpr*/ auto image = render(fn);
 
 int main(){
     for(uint i = 0; i < ROWS/16; i++){

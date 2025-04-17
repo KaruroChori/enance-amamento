@@ -19,7 +19,7 @@ struct wrapper{
 
 #pragma omp declare target
 static wrapper<bitfield> a = bitfield{4,6}; //This is ok
-static bitfield b = {5,6};                  //This one fails
+//static bitfield b = {5,6};                  //This one fails
 #pragma omp end declare target
 
 int main(){

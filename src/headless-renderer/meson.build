@@ -1,5 +1,5 @@
 headless_renderer = executable(
-    'image-gen',
+    'enamento-demo-cli',
     ['main.cpp','shared-slots.cpp'],
     install: true,
     cpp_args: [openmp_compile_args],
