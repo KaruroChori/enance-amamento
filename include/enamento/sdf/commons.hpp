@@ -141,7 +141,7 @@ enum class visibility_t{
     SKIP,       //Ignore the current node, but render children (as union)
 };
 
-typedef std::function<bool(const char* name, fields_t fields)> visitor_t;
+typedef std::function<bool(const char* name, fields_t fields, void* base, size_t children)> visitor_t;
 
 }
 
@@ -191,11 +191,14 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     {self.name()} -> std::same_as<const char*>;
     {self.fields()}-> std::same_as<fields_t>;
     {self.fields(paths)} -> std::same_as<fields_t> ;
+    {self.addr()} -> std::same_as<const void*>;
+    {mutself.addr()} -> std::same_as<void*>;
     {self.children()} -> std::same_as<size_t> ;
     {self.is_visible()} -> std::same_as<visibility_t> ;
     {self.traits(traits)}-> std::same_as<void>;
 
-    {mutself.tree_visit(visitor)} -> std::same_as<bool>;
+    {mutself.tree_visit_pre(visitor)} -> std::same_as<bool>;
+    {mutself.tree_visit_post(visitor)} -> std::same_as<bool>;
 
     //TODO: BLOCK TO DEPRECATE
     {self.to_cpp(ostrm)} -> std::same_as<bool> ;

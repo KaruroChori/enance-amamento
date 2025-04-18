@@ -240,7 +240,10 @@ namespace sdf{
             inline fields_t fields(const path_t* steps) const;
             inline visibility_t is_visible() const;
 
-            inline bool tree_visit(const visitor_t& op);
+            inline bool tree_visit_pre(const visitor_t& op);
+            inline bool tree_visit_post(const visitor_t& op);
+            inline void* addr();
+            inline const void* addr() const;
             inline size_t children() const;
 
             inline bool to_cpp(ostream& out) const;
@@ -266,7 +269,10 @@ namespace sdf{
             virtual constexpr inline fields_t fields(const path_t* steps) const=0;
             virtual constexpr inline visibility_t is_visible() const=0;
 
-            virtual constexpr bool tree_visit(const visitor_t& op) = 0;
+            virtual constexpr bool tree_visit_pre(const visitor_t& op) = 0;
+            virtual constexpr bool tree_visit_post(const visitor_t& op) = 0;
+            virtual constexpr void* addr();
+            virtual constexpr const void* addr() const;
             virtual constexpr size_t children() const;
 
             virtual uint64_t to_tree(tree::builder& dst)const=0;
@@ -289,8 +295,11 @@ namespace sdf{
             virtual constexpr inline fields_t fields(const path_t* steps) const override{return static_cast<const T<Attrs, Args...>*>(this)->fields(steps);}
             virtual constexpr inline visibility_t is_visible() const override{return static_cast<const T<Attrs, Args...>*>(this)->is_visible();}
 
-            virtual constexpr inline bool tree_visit(const visitor_t& op){return T<Attrs,Args...>::tree_visit(op);};
-            virtual constexpr inline size_t children() const{return T<Attrs,Args...>::children();}
+            virtual constexpr inline bool tree_visit_pre(const visitor_t& op)override{return T<Attrs,Args...>::tree_visit_pre(op);};
+            virtual constexpr inline bool tree_visit_post(const visitor_t& op)override{return T<Attrs,Args...>::tree_visit_post(op);};
+            virtual constexpr inline void* addr()override{return T<Attrs,Args...>::addr();}
+            virtual constexpr inline const void* addr()const override{return T<Attrs,Args...>::addr();}
+            virtual constexpr inline size_t children() const override{return T<Attrs,Args...>::children();}
 
             virtual uint64_t to_tree(tree::builder& dst)const override{return T<Attrs,Args...>::to_tree(dst);};
             virtual bool to_cpp(ostream& dst) const override{return T<Attrs,Args...>::to_cpp(dst);}
@@ -309,8 +318,11 @@ namespace sdf{
             virtual constexpr inline fields_t fields(const path_t* steps) const override{return static_cast<const T*>(this)->fields(steps);}
             virtual constexpr inline visibility_t is_visible() const override{return static_cast<const T*>(this)->is_visible();}
 
-            virtual constexpr inline bool tree_visit(const visitor_t& op){return  static_cast<T*>(this)->tree_visit(op);};
-            virtual constexpr inline size_t children() const{return static_cast<const T*>(this)->children();}
+            virtual constexpr inline bool tree_visit_pre(const visitor_t& op)override{return  static_cast<T*>(this)->tree_visit_pre(op);};
+            virtual constexpr inline bool tree_visit_post(const visitor_t& op)override{return  static_cast<T*>(this)->tree_visit_post(op);};
+            virtual constexpr inline void* addr()override{return static_cast<T*>(this)->addr();}
+            virtual constexpr inline const void* addr() const override{return static_cast<const T*>(this)->addr();}
+            virtual constexpr inline size_t children() const override{return static_cast<const T*>(this)->children();}
 
             virtual constexpr uint64_t to_tree(tree::builder& dst)const override{return static_cast<const T*>(this)->to_tree(dst);};
             virtual bool to_cpp(ostream& dst) const override{return static_cast<const T*>(this)->to_cpp(dst);}
@@ -378,6 +390,12 @@ namespace sdf{
                 using LL = real_type<L>;
 
                 constexpr inline const LL& left() const{
+                    if constexpr(is_specialization<L,std::shared_ptr>{}) return *_left; 
+                    else if constexpr(is_specialization<L,tree_idx_ref>{}) return *(LL*)((uint8_t*)(this)-_left.offset);  
+                    else return _left;
+                }
+
+                constexpr inline LL& left(){
                     if constexpr(is_specialization<L,std::shared_ptr>{}) return *_left; 
                     else if constexpr(is_specialization<L,tree_idx_ref>{}) return *(LL*)((uint8_t*)(this)-_left.offset);  
                     else return _left;
@@ -467,6 +485,17 @@ namespace sdf{
                     else return _right;
                 }
 
+                constexpr inline LL& left(){
+                    if constexpr(is_specialization<L,std::shared_ptr>{}) return *_left;
+                    else if constexpr(is_specialization<L,tree_idx_ref>{}) return *(LL*)((uint8_t*)(this)-_left.offset);  
+                    else return _left;
+                }
+                constexpr inline RR& right(){
+                    if constexpr(is_specialization<R,std::shared_ptr>{}) return *_right;
+                    else if constexpr(is_specialization<R,tree_idx_ref>{}) return *(RR*)((uint8_t*)(this)-_right.offset);  
+                    else return _right;
+                }
+
                 template<typename T>
                 friend bool to_cpp_from_fields_op(ostream& out, const T& node, bool trailing_comma);
                 template<typename T>
@@ -513,7 +542,10 @@ namespace sdf{
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<Attrs>::fields;                                                                   \
             inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit(const visitor_t& op);                                                         \
+            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+            constexpr inline void* addr(){return (void*)this;}                                                      \
+            constexpr inline const void* addr()const{return (const void*)this;}                                     \
             constexpr inline size_t children() const{return 0;}                                                     \
             using impl_base::NAME<Attrs>::NAME;                                                                     \
         };                                                                                                          \
@@ -525,8 +557,12 @@ namespace sdf{
             return {nullptr,0};                                                                                     \
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
-        constexpr bool NAME <Attrs> :: tree_visit(const visitor_t& op){                                             \
-            return op(this->name(),this->fields());                                                                 \
+        constexpr bool NAME <Attrs> :: tree_visit_pre(const visitor_t& op){                                         \
+            return op(this->name(),this->fields(),(void*)this,this->children());                                    \
+        }                                                                                                           \
+        template <typename Attrs>                                                                                   \
+        constexpr bool NAME <Attrs> :: tree_visit_post(const visitor_t& op){                                        \
+            return op(this->name(),this->fields(),(void*)this,this->children());                                    \
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
         uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
@@ -608,7 +644,10 @@ namespace sdf{
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A,B>::fields;                                                                     \
             inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit(const visitor_t& op);                                                         \
+            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+            constexpr inline void* addr(){return (void*)this;}                                                      \
+            constexpr inline const void* addr()const{return (const void*)this;}                                     \
             constexpr inline size_t children() const{return 2;}                                                     \
             using impl_base::NAME<A,B>::NAME;                                                                       \
             using typename impl_base::NAME<A,B>::base;                                                              \
@@ -625,10 +664,17 @@ namespace sdf{
             return {nullptr,0};                                                                                     \
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
-        constexpr bool NAME <A,B> :: tree_visit(const visitor_t& op){                                               \
-            auto sval = op(this->name(),this->fields());                                                            \
-            auto lval = op(this->left().name(),this->left().fields());                                              \
-            auto rval = op(this->right().name(),this->right().fields());                                            \
+        constexpr bool NAME <A,B> :: tree_visit_pre(const visitor_t& op){                                           \
+            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto lval = this->left().tree_visit_pre(op);                                                            \
+            auto rval = this->right().tree_visit_pre(op);                                                           \
+            return sval && lval && rval;                                                                            \
+        }                                                                                                           \
+        template<typename A, typename B>                                                                            \
+        constexpr bool NAME <A,B> :: tree_visit_post(const visitor_t& op){                                          \
+            auto lval = this->left().tree_visit_post(op);                                                           \
+            auto rval = this->right().tree_visit_post(op);                                                          \
+            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
             return sval && lval && rval;                                                                            \
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
@@ -739,7 +785,10 @@ namespace sdf{
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A>::fields;                                                                       \
             inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit(const visitor_t& op);                                                         \
+            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+            constexpr inline void* addr(){return (void*)this;}                                                      \
+            constexpr inline const void* addr()const{return (void*)this;}                                           \
             constexpr inline size_t children() const{return 1;}                                                     \
             using impl_base::NAME<A>::NAME;                                                                         \
             using typename impl_base::NAME<A>::base;                                                                \
@@ -755,9 +804,15 @@ namespace sdf{
             return {nullptr,0};                                                                                     \
         }                                                                                                           \
         template<typename A>                                                                                        \
-        constexpr bool NAME <A> :: tree_visit(const visitor_t& op){                                                 \
-            auto sval = op(this->name(),this->fields());                                                            \
-            auto lval = op(this->left().name(),this->left().fields());                                              \
+        constexpr bool NAME <A> :: tree_visit_pre(const visitor_t& op){                                             \
+            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto lval = this->left().tree_visit_pre(op);                                                            \
+            return sval && lval;                                                                                    \
+        }                                                                                                           \
+        template<typename A>                                                                                        \
+        constexpr bool NAME <A> :: tree_visit_post(const visitor_t& op){                                            \
+            auto lval = this->left().tree_visit_post(op);                                                           \
+            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
             return sval && lval;                                                                                    \
         }                                                                                                           \
         template<typename A>\
@@ -1098,15 +1153,33 @@ namespace utils{
     }
 
     template <typename Attrs>
-    inline bool tree_idx<Attrs>::tree_visit(const visitor_t& op){
-        SDF_TREE_DISPATCH(tree_visit(op),return);
+    inline bool tree_idx<Attrs>::tree_visit_pre(const visitor_t& op){
+        SDF_TREE_DISPATCH(tree_visit_pre(op),return);
         return false;
     }
-    
+
+    template <typename Attrs>
+    inline bool tree_idx<Attrs>::tree_visit_post(const visitor_t& op){
+        SDF_TREE_DISPATCH(tree_visit_post(op),return);
+        return false;
+    }
+
     template <typename Attrs>
     inline size_t tree_idx<Attrs>::children() const{
         SDF_TREE_DISPATCH(children(),return);
         return false;
+    }
+
+    template <typename Attrs>
+    inline void* tree_idx<Attrs>::addr(){
+        SDF_TREE_DISPATCH(addr(),return);
+        return nullptr;
+    }
+
+    template <typename Attrs>
+    inline const void* tree_idx<Attrs>::addr()const{
+        SDF_TREE_DISPATCH(addr(),return);
+        return nullptr;
     }
 
     template <typename Attrs>

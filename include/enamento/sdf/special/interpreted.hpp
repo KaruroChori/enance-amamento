@@ -55,9 +55,12 @@ namespace sdf{
             inline fields_t fields(const path_t* steps) const{return handle()->fields(steps);};
             inline visibility_t is_visible() const{return visibility_t::VISIBLE;}
             inline void traits(traits_t& out) const{return handle()->traits(out);}
-            inline size_t children() const{return handle()->children();}
 
-            inline bool tree_visit(const visitor_t& v) const{return handle()->tree_visit(v);}
+            inline size_t children() const{return handle()->children();}
+            inline void* addr(){return handle()->addr();}
+            inline const void* addr()const{return handle()->addr();}
+            inline bool tree_visit_pre(const visitor_t& v) const{return handle()->tree_visit_pre(v);}
+            inline bool tree_visit_post(const visitor_t& v) const{return handle()->tree_visit_post(v);}
 
             inline bool to_cpp(ostream& out)const{return handle()->to_cpp(out);};
             inline bool to_xml(xml& out)const{return handle()->to_xml(out);}

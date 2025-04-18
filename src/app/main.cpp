@@ -85,6 +85,7 @@ int main(int argc, const char** argv) {
     }
 
     fromXML->to_cpp((sdf::ostream&)std::cout); 
+    std::print("\n");
  
     sdf::tree::builder builder; 
     builder.close(fromXML->to_tree(builder));
@@ -142,6 +143,24 @@ int main(int argc, const char** argv) {
             {.albedo={.type=pipeline::material_t::albedo_t::COLOR,.color={vec3{0.2,0.8,0.2},1.0}}}
 
     };
+
+    +[](sdf::fields_t fields){};
+
+    SDF_MIX_ALL.tree_visit_pre([](const char* tag, sdf::fields_t fields, void* base, size_t children)->bool{
+        static std::vector<std::pair<size_t,size_t>> depth = {};
+
+        std::cout<<tag<<"\n";
+
+        if(depth.empty())return true;
+
+        auto& entry = depth.back();
+        if(entry.second==0)depth.pop_back();
+        else entry.second--;
+
+        if(children!=0)depth.push_back({children,children});
+
+        return true;
+    });
 
     //pipeline::demo<decltype(SDF_BASE_W1)> PIPERINE(DEVICE,SDF_BASE_W1,materials,sizeof(materials)/sizeof(pipeline::material_t));
     pipeline::demo<decltype(SDF_MIX_ALL)> PIPERINE(DEVICE,SDF_MIX_ALL,materials,sizeof(materials)/sizeof(pipeline::material_t));
