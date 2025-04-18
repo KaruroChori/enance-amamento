@@ -14,6 +14,7 @@
 #include <concepts>
 #include <cstdint>
 #include <memory>
+#include <functional>
 #include <type_traits>
 
 #define GLM_FORCE_SWIZZLE
@@ -60,6 +61,7 @@ constexpr static float MIX_EPS = 400e-2;
     struct ostream{};
     struct xml{};
 #endif
+
 
 
 enum path_t{
@@ -139,6 +141,8 @@ enum class visibility_t{
     SKIP,       //Ignore the current node, but render children (as union)
 };
 
+typedef std::function<bool(const char* name, fields_t fields)> visitor_t;
+
 }
 
 ////Tree Primitives////
@@ -161,6 +165,8 @@ concept attrs_i = requires(const T& self, const T& self2, ostream& ostrm, xml& o
     std::is_same<decltype(self.distance),float>();
     std::is_same<decltype(self.fields),typename T::extras_t>();
     {self+self2} -> std::convertible_to<typename T::extras_t> ;
+
+    //TODO: BLOCK TO DEPRECATE
     {self.fields.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.fields.to_xml(oxml)} -> std::same_as<bool> ;
     //{self.fields.from_xml(ixml, defattrs)} -> std::same_as<bool> ;
@@ -173,22 +179,30 @@ concept attrs_i = requires(const T& self, const T& self2, ostream& ostrm, xml& o
  */
 template<typename T>
 concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
-    const T self, glm::vec2 pos2d, glm::vec3 pos3d, 
+    const T self, T mutself,
+    glm::vec2 pos2d, glm::vec3 pos3d, 
     traits_t traits, ostream& ostrm, xml& oxml, 
-    const path_t* paths, tree::builder& otree
+    const path_t* paths, tree::builder& otree,
+    const visitor_t& visitor
 ){
     {self.operator()(pos3d)} -> std::same_as<typename T::attrs_t>;
     {self.sample(pos3d)} -> std::convertible_to<float>;
-    {self.traits(traits)}-> std::same_as<void>;
+    
     {self.name()} -> std::same_as<const char*>;
     {self.fields()}-> std::same_as<fields_t>;
     {self.fields(paths)} -> std::same_as<fields_t> ;
+    {self.children()} -> std::same_as<size_t> ;
+    {self.is_visible()} -> std::same_as<visibility_t> ;
+    {self.traits(traits)}-> std::same_as<void>;
+
+    {mutself.tree_visit(visitor)} -> std::same_as<bool>;
+
+    //TODO: BLOCK TO DEPRECATE
     {self.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.to_xml(oxml)} -> std::same_as<bool> ;
     {self.to_tree(otree)} -> std::same_as<uint64_t> ;
     //{self.from_xml(oxml)} -> std::same_as<bool> ;
 
-    {self.is_visible()} -> std::same_as<visibility_t> ;
 };
 
 }

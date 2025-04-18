@@ -49,12 +49,15 @@ namespace sdf{
             
             inline Attrs operator()(const glm::vec3& pos) const{return handle()->operator()(pos);};
             inline float sample(const glm::vec3& pos) const{return handle()->sample(pos);}
-            inline void traits(traits_t& out) const{return handle()->traits(out);}
             
             inline const char* name() const{return handle()->name();}
             inline fields_t fields() const{return handle()->fields();}
             inline fields_t fields(const path_t* steps) const{return handle()->fields(steps);};
             inline visibility_t is_visible() const{return visibility_t::VISIBLE;}
+            inline void traits(traits_t& out) const{return handle()->traits(out);}
+            inline size_t children() const{return handle()->children();}
+
+            inline bool tree_visit(const visitor_t& v) const{return handle()->tree_visit(v);}
 
             inline bool to_cpp(ostream& out)const{return handle()->to_cpp(out);};
             inline bool to_xml(xml& out)const{return handle()->to_xml(out);}
