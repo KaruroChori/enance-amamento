@@ -6,8 +6,19 @@ At the moment, only clang-21 has been tested and is the one used for development
 If you really want, make sure you are using the special branch with offloading patches for `gcc-14` or `gcc-15`.  
 
 If no support for OpenMP is available, there is a stub implementation in the subprojects, but it has not been tested nor integrated in the build systems as of yet.  
-Also, while the main library has no external dependency aside from those directly handled by meson, some utilities like the main UI do.  
+Also, while the main library has no external dependency, aside from those directly handled by meson, some utilities like the main UI do.  
 Make sure `sdl3` is installed on your system if you want to build and run them.
+
+## Toolchain
+
+Sadly, versions of clang distributed via [https://apt.llvm.org/](https://apt.llvm.org/) are not good enough.  
+While OpenMP and offloading are working fine, they don't distribute libraries like libc for the relevant offloaded targets.  
+It is possible other distros don't share the same problem with their packages, but I have not tried myself.
+This issue is currently [tracked](https://github.com/KaruroChori/enance-amamento/issues/9) upstream.  
+
+For the time being, you will need to build your own version of clang with full support for offloading.  
+Doing so can be very time consuming even if you have a decent workstation.  
+I will write a document covering that at some point I guess.
 
 ## Building
 
@@ -25,7 +36,7 @@ make run OFFLOAD=nvptx64
 If you want to use your CPU as offloaded device
 
 ```bash
-make run OFFLOAD=amd64 #Or match your architecture.
+make run OFFLOAD=amd64-linux-unknown #Or match your architecture.
 ```
 
 If you want to build a version without omp support at all (it will be very slow)

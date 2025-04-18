@@ -4,7 +4,7 @@ vssdf = library(
     install: true,
     cpp_args: [openmp_compile_args],
     link_args: [openmp_link_args],
-    dependencies: [magic_enum_dep, imgui_dep, pugixml_dep],
+    dependencies: [magic_enum_dep, imgui_dep, pugixml_dep, libstub_dep],
     include_directories: include_dirs,
 )
 

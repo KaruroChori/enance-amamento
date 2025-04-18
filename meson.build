@@ -26,7 +26,7 @@ else
     '-fopenmp',
     '-g',
     '-fopenmp-targets=' + get_option('offload-targets'),
-    '-fopenmp-cuda-mode', '-Xopenmp-target', '-D SDF_IS_HOST=false'
+    '-fopenmp-cuda-mode', '-march=native', '-Xopenmp-target', '-D SDF_IS_HOST=false'
   ]
 endif 
 

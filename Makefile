@@ -46,7 +46,7 @@ dist: install
 # Run the main app setting up the environment. Very much needed as the base stack size is extremely small and segfaults.
 run: configure
 	@echo "Running with default env vars"
-	$(MESON) compile editor -C $(BUILD_DIR)
+	$(MESON) compile enamento-demo -C $(BUILD_DIR)
 	LIBOMPTARGET_STACK_SIZE=2048 ./build/src/app/enamento-demo 
 
 # Clean up the build directory.

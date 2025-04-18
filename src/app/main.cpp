@@ -56,6 +56,16 @@ class Editor{
 int main(int argc, const char** argv) {
     lua_example();
 
+    /*#pragma omp target
+    {
+        int b = 11;
+        std::function<bool(int)> test = [&](int a){return a==b;}; 
+        std::function<int(int)> test2 = [&](int a){if(a==0)return 1;return a*test2(a-1);}; 
+        //std::string hello = "hello world"; 
+        assert(true);
+        printf("test %d %d\n", test(12), test2(5));
+    }*/
+
     const int DEVICE = omp_get_default_device(); //or omp_get_initial_device()
 
     App::treeview_t treeview;
@@ -74,7 +84,7 @@ int main(int argc, const char** argv) {
         }catch(...){}
     }
 
-    fromXML->to_cpp((sdf::ostream&)std::cout);
+    fromXML->to_cpp((sdf::ostream&)std::cout); 
  
     sdf::tree::builder builder; 
     builder.close(fromXML->to_tree(builder));

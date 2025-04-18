@@ -13,6 +13,7 @@
 #include <cstdlib>
 //TODO: Remove the experimental feature by using a custom implementation
 #include <experimental/type_traits>
+#include <functional>
 #include <omp.h>
 #include "utils/static.hpp"
 
@@ -240,6 +241,7 @@ namespace sdf{
             inline fields_t fields(const path_t* steps) const;
             inline visibility_t is_visible() const;
 
+            inline bool tree_visit(const std::function<bool(const char*,fields_t)>& op);
             inline bool to_cpp(ostream& out) const;
             inline bool to_xml(xml& n) const;
         };

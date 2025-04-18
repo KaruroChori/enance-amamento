@@ -1,0 +1,1 @@
+Stub to provide basic libc++ (and maybe libc) functionalities to use some features of libc++ (and possibly libc if we want to keep the target freestanding).
