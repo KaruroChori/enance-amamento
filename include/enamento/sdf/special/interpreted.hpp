@@ -72,7 +72,7 @@ namespace sdf{
 
     namespace comptime {
         template <typename Attrs=default_attrs>
-        using Interpreted_t = utils::primitive<Attrs,impl::Interpreted>::type;
+        using Interpreted_t = utils::primitive<Attrs,impl::Interpreted>;
         template <typename Attrs=default_attrs>
         constexpr inline Interpreted_t<Attrs> Interpreted (impl::Interpreted<Attrs> && ref ){
             return ref;

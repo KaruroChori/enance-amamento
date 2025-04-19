@@ -256,9 +256,7 @@ namespace sdf{
         struct empty_t{};
 
         template <typename Attrs, template<typename, typename... Args> typename T, typename... Args> requires sdf_i<T<Attrs,Args...>>
-        struct primitive{
-            using type = T<Attrs, Args...>;
-        };
+        using primitive = T<Attrs, Args...>;
 
         template <typename Attrs>
         struct base_dyn{
@@ -509,7 +507,8 @@ namespace sdf{
    
     }
 
-    namespace{namespace impl_base{
+    namespace{
+    namespace impl_base{
         using namespace glm;
     }}
 
@@ -584,7 +583,7 @@ namespace sdf{
     }                                                                                                               \
     namespace comptime {                                                                                            \
         template <typename Attrs=default_attrs>                                                                     \
-        using NAME##_t = utils::primitive<Attrs,impl::NAME >::type;                                                 \
+        using NAME##_t = utils::primitive<Attrs,impl::NAME >;                                                       \
         template <typename Attrs=default_attrs>                                                                     \
         constexpr inline NAME##_t<Attrs> NAME (  impl::NAME<Attrs> && ref ){                                        \
             return ref;                                                                                             \
@@ -928,13 +927,22 @@ namespace sdf{
 
     //Dynamic is not needed in base mode, as smart pointers on which it is built upon are not C.
 
-    //Static implementation
+    /**
+     * @brief Static implementation, which can be resolved at compile time
+     * 
+     */
     namespace comptime{}
 
-    //Polimorphic implementation
+    /**
+     * @brief Polymorphic implementation, moslty used as a bridge for dynamic
+     * 
+     */
     namespace polymorphic{}
 
-    //Dynamic implementation
+    /**
+     * @brief Dynamic implementation, its provides SDF tree which an be edited at runtime.
+     * 
+     */
     namespace dynamic{}
 }
 
