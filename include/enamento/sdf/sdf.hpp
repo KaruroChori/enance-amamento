@@ -196,6 +196,7 @@ namespace sdf{
     typedef idx_attrs<true> default_attrs;
     #endif
 
+    
     //TODO complete helpers here
     template<field_t::type_t TYPE >
     std::pair<size_t,size_t> set_field(sdf_i auto& node, const path_t* paths, const char* name, const void * src){
@@ -242,6 +243,8 @@ namespace sdf{
 
             inline bool tree_visit_pre(const visitor_t& op);
             inline bool tree_visit_post(const visitor_t& op);
+            //inline bool ctree_visit_pre(const cvisitor_t& op);    //TODO: const versions
+            //inline bool ctree_visit_post(const cvisitor_t& op);
             inline void* addr();
             inline const void* addr() const;
             inline size_t children() const;

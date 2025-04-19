@@ -1,5 +1,7 @@
 #pragma once
 
+//TODO: this will be removed and moved into sampler/texture***
+
 #include "shared.hpp"
 #include <string_view>
 #include <glm/glm.hpp>

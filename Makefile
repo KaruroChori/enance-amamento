@@ -15,10 +15,10 @@ OFFLOAD ?= amd64-linux-unknown
 
 NO_OMP ?= false
 
-.PHONY: all configure build install dist test clean
+.PHONY: all configure build install dist test clean docs
 
 # Run all steps by default.
-all: configure build install
+all: configure build install docs
 
 # Configure step.
 configure:
@@ -48,6 +48,10 @@ run: configure
 	@echo "Running with default env vars"
 	$(MESON) compile enamento-demo -C $(BUILD_DIR)
 	LIBOMPTARGET_STACK_SIZE=2048 ./build/src/app/enamento-demo 
+
+docs:
+	doxygen ./dist/configs/Doxyfile
+	mkdocs build -f ./dist/configs/mkdocs.yml
 
 # Clean up the build directory.
 clean:

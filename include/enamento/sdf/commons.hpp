@@ -142,6 +142,7 @@ enum class visibility_t{
 };
 
 typedef std::function<bool(const char* name, fields_t fields, void* base, size_t children)> visitor_t;
+typedef std::function<bool(const char* name, fields_t fields, const void* base, size_t children)> cvisitor_t;
 
 }
 

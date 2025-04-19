@@ -1,12 +1,21 @@
 #pragma once 
 
+/**
+ * @file serialize.hpp
+ * @author karurochari
+ * @brief Serialization for sdf.
+ * @date 2025-04-19
+ * It covers serialization & deserialization of attributes, and several helpers to implement code generation.
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #ifndef SDF_INTERNALS
 #error Don't import manually, this can only be used internally by the library
 #endif
 
 #include "sdf.hpp"
 #include <ostream>
-//#include <pugixml.hpp>
 #include <format>
 
 namespace sdf{
