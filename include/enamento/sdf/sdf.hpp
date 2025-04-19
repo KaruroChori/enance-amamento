@@ -519,7 +519,7 @@ namespace sdf{
     #if SDF_IS_HOST==true
         #define sdf_register_primitive_ostream(NAME) \
             dst<< #NAME "({";                                                                                   \
-            if(!codegen::to_cpp_from_fields(dst, *this))return false;                                           \
+            if(!serialize::fields2cpp(dst, addr(), fields()))return false;                                      \
             dst << "{";                                                                                         \
             if(!this->cfg.to_cpp(dst))return false;                                                             \
             dst << "}})" ;    /* Add args */                                                                    \
@@ -560,11 +560,11 @@ namespace sdf{
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
         constexpr bool NAME <Attrs> :: tree_visit_pre(const visitor_t& op){                                         \
-            return op(this->name(),this->fields(),(void*)this,this->children());                                    \
+            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
         constexpr bool NAME <Attrs> :: tree_visit_post(const visitor_t& op){                                        \
-            return op(this->name(),this->fields(),(void*)this,this->children());                                    \
+            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
         uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
@@ -622,7 +622,7 @@ namespace sdf{
             dst<< #NAME "("; base::left().to_cpp(dst); dst<<","; base::right().to_cpp(dst);                     \
             if(sizeof(NAME<A,B>::_fields)!=0){                                                                  \
                 dst<<", {";                                                                                     \
-                if(!codegen::to_cpp_from_fields(dst, *this, false))return false;                                \
+                if(!serialize::fields2cpp(dst, addr(), fields(), false))return false;                           \
                 dst<<"}";                                                                                       \
             }                                                                                                   \
             dst << " )" ;                                                                                       \
@@ -667,7 +667,7 @@ namespace sdf{
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
         constexpr bool NAME <A,B> :: tree_visit_pre(const visitor_t& op){                                           \
-            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
             auto lval = this->left().tree_visit_pre(op);                                                            \
             auto rval = this->right().tree_visit_pre(op);                                                           \
             return sval && lval && rval;                                                                            \
@@ -676,7 +676,7 @@ namespace sdf{
         constexpr bool NAME <A,B> :: tree_visit_post(const visitor_t& op){                                          \
             auto lval = this->left().tree_visit_post(op);                                                           \
             auto rval = this->right().tree_visit_post(op);                                                          \
-            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
             return sval && lval && rval;                                                                            \
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
@@ -764,7 +764,7 @@ namespace sdf{
             base::left().to_cpp(dst);                                                                           \
             if(sizeof(NAME<A>::_fields)!=0){                                                                    \
                 dst<<", {";                                                                                     \
-                if(!codegen::to_cpp_from_fields(dst, *this, false))return false;                                \
+                if(!serialize::fields2cpp(dst, addr(), fields(), false))return false;                           \
                 dst<<"}";                                                                                       \
             }                                                                                                   \
             dst << " )" ;    /* Add args */                                                                     \
@@ -807,14 +807,14 @@ namespace sdf{
         }                                                                                                           \
         template<typename A>                                                                                        \
         constexpr bool NAME <A> :: tree_visit_pre(const visitor_t& op){                                             \
-            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
             auto lval = this->left().tree_visit_pre(op);                                                            \
             return sval && lval;                                                                                    \
         }                                                                                                           \
         template<typename A>                                                                                        \
         constexpr bool NAME <A> :: tree_visit_post(const visitor_t& op){                                            \
             auto lval = this->left().tree_visit_post(op);                                                           \
-            auto sval = op(this->name(),this->fields(), (void*)this, this->children());                             \
+            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
             return sval && lval;                                                                                    \
         }                                                                                                           \
         template<typename A>\
@@ -978,6 +978,8 @@ namespace sdf{
         ));\
     }
 
+//TODO: the split between primitive_normal and commons is wrong, it should be reshaped a bit.
+
 #define PRIMITIVE_COMMONS \
     constexpr inline attrs_t operator()(const glm::vec3& pos)const {\
         float tmp=sample(pos); \
@@ -988,7 +990,7 @@ namespace sdf{
 #define PRIMITIVE_TRAIT_SYM to.is_sym={true,true,true};
 #define PRIMITIVE_TRAIT_GOOD to.is_exact_inner=true;to.is_exact_outer=true;to.is_bounded_inner=true;to.is_bounded_outer=true;
 
-//Helpers for codegen                
+//Helpers for serialization                
 #include "serialize.hpp"
 
 

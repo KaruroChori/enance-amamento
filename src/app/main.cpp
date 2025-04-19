@@ -150,7 +150,7 @@ int main(int argc, const char** argv) {
         static std::vector<std::pair<size_t,size_t>> depth = {};
 
         std::cout<<tag<<"\n";
-
+        sdf::serialize::fields2cpp(std::cout, base, fields);
         if(depth.empty())return true;
 
         auto& entry = depth.back();

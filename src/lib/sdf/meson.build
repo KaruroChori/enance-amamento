@@ -1,6 +1,6 @@
 vssdf = library(
     'enamento-sdf',
-    [],
+    ['serialize.cpp'],
     install: true,
     cpp_args: [openmp_compile_args],
     link_args: [openmp_link_args],
