@@ -39,13 +39,6 @@ struct basic_attrs{
      * @brief Additional fields, empty on a default implementation
      */
     struct extras_t{
-        bool to_cpp(ostream& out) const{
-            #if SDF_IS_HOST==true
-                return false;
-            #else 
-            return false;
-            #endif
-        }
         bool to_xml(xml& n) const{
             #if SDF_IS_HOST==true
                 return false; 
@@ -80,14 +73,6 @@ struct idx_attrs{
         uint32_t idx: 10 = 0;       ///Material index, zero for special NONE, preventing its rendering.   
         uint32_t weak: 1 = true;    ///If true, don't use this material for contributions in operators (unless the other is also weak).
     
-        bool to_cpp(ostream& out) const{
-            #if SDF_IS_HOST==true
-                out<<uid<<","<<gid<<","<<idx<<","<<weak;
-                return true;
-            #else 
-            return false;
-            #endif
-        }
         bool to_xml(xml& n) const{
             #if SDF_IS_HOST==true
                 n.append_attribute("uid").set_value(this->uid);
@@ -156,14 +141,6 @@ struct color_attrs{
         uint8_t b;
         uint8_t a;
 
-        bool to_cpp(ostream& out) const{
-            #if SDF_IS_HOST==true
-                out<<r<<","<<g<<","<<b<<","<<a;
-                return true;
-            #else
-                return false;
-            #endif
-        }
         bool to_xml(xml& n) const{
             #if SDF_IS_HOST==true
                 return false; 
@@ -490,8 +467,6 @@ namespace sdf{
                     else return _right;
                 }
 
-                template<typename T>
-                friend bool to_xml_from_fields_op(ostream& out, const T& node);
         };   
 
 

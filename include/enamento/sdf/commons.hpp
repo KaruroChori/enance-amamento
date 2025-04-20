@@ -162,13 +162,12 @@ namespace sdf{
  * @tparam T 
  */
 template<typename T>
-concept attrs_i = requires(const T& self, const T& self2, ostream& ostrm, xml& oxml, const xml& ixml, T::extras_t& defattrs){
+concept attrs_i = requires(const T& self, const T& self2, xml& oxml, const xml& ixml, T::extras_t& defattrs){
     std::is_same<decltype(self.distance),float>();
     std::is_same<decltype(self.fields),typename T::extras_t>();
     {self+self2} -> std::convertible_to<typename T::extras_t> ;
 
     //TODO: BLOCK TO DEPRECATE
-    {self.fields.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.fields.to_xml(oxml)} -> std::same_as<bool> ;
     //{self.fields.from_xml(ixml, defattrs)} -> std::same_as<bool> ;
 };
@@ -182,7 +181,7 @@ template<typename T>
 concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     const T self, T mutself,
     glm::vec2 pos2d, glm::vec3 pos3d, 
-    traits_t traits, ostream& ostrm, xml& oxml, 
+    traits_t traits, xml& oxml, 
     const path_t* paths, tree::builder& otree,
     const visitor_t& visitor
 ){
