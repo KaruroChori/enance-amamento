@@ -89,8 +89,6 @@ namespace sdf{
             inline void* addr();
             inline const void* addr() const;
             inline size_t children() const;
-
-            inline bool to_xml(xml& n) const;
         };
 
         struct empty_t{};
@@ -120,7 +118,6 @@ namespace sdf{
             virtual constexpr size_t children() const=0;
 
             virtual uint64_t to_tree(tree::builder& dst)const=0;
-            virtual bool to_xml(xml& dst) const=0;
 
             virtual ~base_dyn(){}
         };  
@@ -148,7 +145,6 @@ namespace sdf{
             virtual constexpr inline size_t children() const override{return T<Attrs,Args...>::children();}
 
             virtual uint64_t to_tree(tree::builder& dst)const override{return T<Attrs,Args...>::to_tree(dst);};
-            virtual bool to_xml(xml& dst) const override{return T<Attrs,Args...>::to_xml(dst);}
         };
 
         template <typename Attrs, typename T> requires sdf_i<T> 
@@ -173,7 +169,6 @@ namespace sdf{
             virtual constexpr inline size_t children() const override{return static_cast<const T*>(this)->children();}
 
             virtual constexpr uint64_t to_tree(tree::builder& dst)const override{return static_cast<const T*>(this)->to_tree(dst);};
-            virtual bool to_xml(xml& dst) const override{return static_cast<const T*>(this)->to_xml(dst);}
             
             using T::T;
             using operation = T;
@@ -247,9 +242,6 @@ namespace sdf{
                     else if constexpr(is_specialization<L,tree_idx_ref>{}) return *(LL*)((uint8_t*)(this)-_left.offset);  
                     else return _left;
                 }
-
-                template<typename T>
-                friend bool to_xml_from_fields_op(xml& out, const T& node);
         };   
 
 
@@ -355,13 +347,6 @@ namespace sdf{
         using namespace glm;
     }}
 
-    #if SDF_IS_HOST==true
-        #define sdf_register_primitive_xml(NAME) return false;
-    #else
-        #define sdf_register_primitive_xml(NAME) return false;
-    #endif
-
-
     /// Used to record a primitive `NAME` across all namespaces
     #define sdf_register_primitive(NAME)                                                                            \
     namespace{                                                                                                      \
@@ -370,7 +355,6 @@ namespace sdf{
         struct NAME : impl_base::NAME<Attrs>{                                                                       \
             using attrs_t = Attrs;                                                                                  \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<Attrs>::fields;                                                                   \
             inline fields_t fields(const path_t* steps) const;                                                      \
             constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
@@ -409,10 +393,6 @@ namespace sdf{
         uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
             auto idx= dst.push(tree::op_t:: NAME, (uint8_t*)this, sizeof( NAME<Attrs> ));                           \
             return idx;                                                                                             \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        bool  NAME <Attrs> :: to_xml(xml& dst)const {                                                               \
-            sdf_register_primitive_xml(NAME)                                                                        \
         }                                                                                                           \
     }                                                                                                               \
     }                                                                                                               \
@@ -466,7 +446,6 @@ namespace sdf{
         struct NAME : impl_base::NAME<A,B>{                                                                         \
             using typename impl_base::NAME<A,B>::attrs_t;                                                           \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A,B>::fields;                                                                     \
             inline fields_t fields(const path_t* steps) const;                                                      \
             constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
@@ -532,10 +511,6 @@ namespace sdf{
                 auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
                 return ret;                                                                                         \
             }                                                                                                       \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        bool  NAME <A,B> :: to_xml(xml& dst)const {                                                                 \
-            sdf_register_operator_2_xml(NAME);                                                                      \
         }                                                                                                           \
     }}                                                                                                              \
     namespace comptime {                                                                                            \
@@ -606,13 +581,12 @@ namespace sdf{
         struct NAME : impl_base::NAME<A>{                                                                           \
             using typename impl_base::NAME<A>::attrs_t;                                                             \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A>::fields;                                                                       \
             inline fields_t fields(const path_t* steps) const;                                                      \
             constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
             constexpr bool tree_visit_post(const visitor_t& op);                                                    \
-            constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                                \
-            constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                               \
+            constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                              \
+            constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                             \
             constexpr inline void* addr(){return (void*)this;}                                                      \
             constexpr inline const void* addr()const{return (void*)this;}                                           \
             constexpr inline size_t children() const{return 1;}                                                     \
@@ -667,10 +641,6 @@ namespace sdf{
                 return ret;\
             }\
         }\
-        template<typename A>                                                                                        \
-        bool  NAME <A> :: to_xml(xml& dst)const {                                                                   \
-            sdf_register_operator_1_xml(NAME)                                                                       \
-        }                                                                                                           \
     }}\
     namespace comptime {                                                                                            \
         constexpr inline auto NAME(auto&& a){                                                                       \
@@ -964,13 +934,6 @@ namespace utils{
         //printf("[dispatch] %d, %d\n", (sdf::tree::op_t::type_t)*(uint16_t*)((uint8_t*)base+offset-2),offset);
         SDF_TREE_DISPATCH(operator()(pos),return);
         return {};
-    }
-
-
-    template<typename Attrs>
-    inline bool tree_idx<Attrs>::to_xml(xml& out) const{
-        SDF_TREE_DISPATCH(to_xml(out),return);
-        return true;
     }
 
     template<typename Attrs>

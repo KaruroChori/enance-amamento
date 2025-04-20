@@ -64,8 +64,6 @@ namespace sdf{
             inline bool ctree_visit_pre(const cvisitor_t& v) const{return handle()->ctree_visit_pre(v);}
             inline bool ctree_visit_post(const cvisitor_t& v) const{return handle()->ctree_visit_post(v);}
 
-            inline bool to_cpp(ostream& out)const{return handle()->to_cpp(out);};
-            inline bool to_xml(xml& out)const{return handle()->to_xml(out);}
             inline uint64_t to_tree(tree::builder& out)const{return handle()->to_tree(out);}
             inline bool from_xml(const xml& in){return handle()->from_xml(in);}
 

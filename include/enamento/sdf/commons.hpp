@@ -166,10 +166,6 @@ concept attrs_i = requires(const T& self, const T& self2, xml& oxml, const xml& 
     std::is_same<decltype(self.distance),float>();
     std::is_same<decltype(self.fields),typename T::extras_t>();
     {self+self2} -> std::convertible_to<typename T::extras_t> ;
-
-    //TODO: BLOCK TO DEPRECATE
-    {self.fields.to_xml(oxml)} -> std::same_as<bool> ;
-    //{self.fields.from_xml(ixml, defattrs)} -> std::same_as<bool> ;
 };
 
 /**
@@ -201,11 +197,8 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     {mutself.tree_visit_post(visitor)} -> std::same_as<bool>;
     {self.ctree_visit_pre(cvisitor)} -> std::same_as<bool>;
     {self.ctree_visit_post(cvisitor)} -> std::same_as<bool>;
-
-    //TODO: BLOCK TO DEPRECATE
-    {self.to_xml(oxml)} -> std::same_as<bool> ;
+    
     {self.to_tree(otree)} -> std::same_as<uint64_t> ;
-    //{self.from_xml(oxml)} -> std::same_as<bool> ;
 
 };
 
@@ -223,13 +216,6 @@ namespace sdf{
          * @brief Additional fields, empty on a default implementation
          */
         struct extras_t{
-            bool to_xml(xml& n) const{
-                #if SDF_IS_HOST==true
-                    return false; 
-                #else
-                return false;
-                #endif
-            }
         };
     
         constexpr static inline const extras_t SKY={};
@@ -256,31 +242,6 @@ namespace sdf{
             uint32_t gid:  9 = 0;       ///Object group. Zero for default group, 511 for sky.
             uint32_t idx: 10 = 0;       ///Material index, zero for special NONE, preventing its rendering.   
             uint32_t weak: 1 = true;    ///If true, don't use this material for contributions in operators (unless the other is also weak).
-        
-            bool to_xml(xml& n) const{
-                #if SDF_IS_HOST==true
-                    n.append_attribute("uid").set_value(this->uid);
-                    n.append_attribute("gid").set_value(this->gid);
-                    n.append_attribute("idx").set_value(this->idx);
-                    n.append_attribute("weak").set_value((bool)this->weak);
-                    return true; 
-                #else
-                return false;
-                #endif
-            }
-            bool from_xml(const xml& n, extras_t& defval){
-                #if SDF_IS_HOST==true
-                    //TODO: Add checks
-                    if(strcmp(n.attribute("uid").as_string(""),"*")==0)this->uid=++defval.uid;
-                    else this->uid = n.attribute("uid").as_uint(0);
-                    this->gid = n.attribute("gid").as_uint(defval.gid);
-                    this->idx = n.attribute("idx").as_uint(defval.idx);
-                    this->weak = n.attribute("weak").as_bool(defval.weak);
-                    return true;
-                #else
-                    return false;
-                #endif
-            }
         };
         
         consteval static extras_t SKY(){return extras_t{0,511,0,true};}
@@ -324,14 +285,6 @@ namespace sdf{
             uint8_t g;
             uint8_t b;
             uint8_t a;
-    
-            bool to_xml(xml& n) const{
-                #if SDF_IS_HOST==true
-                    return false; 
-                #else
-                    return false;
-                #endif
-            }
         };
     
         consteval static extras_t SKY(){return extras_t{44,30,212,255};}

@@ -16,6 +16,7 @@ TODO:
 - Add support for Forward (based on the forest label assigned to each entry)
 */
 
+#include "sdf/serialize.hpp"
 #define GLM_FORCE_INLINE
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
@@ -171,7 +172,7 @@ struct parse_xml{
         if constexpr(!IS_OPERATOR){
             typename Attrs::extras_t* cfg = (typename Attrs::extras_t*)base;
             auto cfg_node=root.child("cfg");
-            cfg->from_xml((const sdf::xml&)cfg_node,tmp_extras.top());
+            sdf::serialize::xml2attrs<Attrs>(cfg_node, *cfg, tmp_extras.top());
         }
 
         for(size_t i=0;i<fields_i;i++){
@@ -306,7 +307,7 @@ struct parse_xml{
 
         else if(strcmp(root.name(),"group")==0){
             typename Attrs::extras_t current;
-            current.from_xml((const sdf::xml&)root,tmp_extras.top());
+            sdf::serialize::xml2attrs<Attrs>(root,current,tmp_extras.top());
             tmp_extras.push(current);
             base = parse_node(root.first_child());
             if(root.first_child()!=root.last_child()){

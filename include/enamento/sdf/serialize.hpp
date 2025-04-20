@@ -56,6 +56,7 @@ bool xml2fields (const pugi::xml_node& xml, const void * node, fields_t fields);
 
 template<sdf::attrs_i T>
 bool attrs2cpp(const typename T::extras_t& attrs, std::ostream& out){
+    throw "NotImplemented";
     return false;
 }
 
@@ -71,10 +72,39 @@ bool attrs2cpp<sdf::color_attrs>(const sdf::color_attrs::extras_t& attrs, std::o
     return true;
 }
 
-//TODO: implements the other cases
+//TODO: implement missing cases
 template<sdf::attrs_i T>
 bool attrs2xml(const typename T::extras_t& attrs, pugi::xml_node& out){
+    throw "NotImplemented";
     return false;
+}
+
+template<>
+bool attrs2xml<sdf::idx_attrs<>>(const sdf::idx_attrs<>::extras_t& attrs, pugi::xml_node& out){
+    out.append_attribute("uid").set_value(attrs.uid);
+    out.append_attribute("gid").set_value(attrs.gid);
+    out.append_attribute("idx").set_value(attrs.idx);
+    out.append_attribute("weak").set_value((bool)attrs.weak);
+    return true;
+}
+
+template<sdf::attrs_i T>
+bool xml2attrs(const pugi::xml_node& in, typename T::extras_t& attrs, const typename T::extras_t& defval = {}){
+    throw "NotImplemented";
+    return false;
+}
+
+template<>
+bool xml2attrs<sdf::idx_attrs<>>(const pugi::xml_node& in, sdf::idx_attrs<>::extras_t& attrs, const typename sdf::idx_attrs<>::extras_t& defval){
+    static size_t uid = 0;
+
+    //TODO: Add checks
+    if(strcmp(in.attribute("uid").as_string(""),"*")==0)attrs.uid=++uid;
+    else attrs.uid = in.attribute("uid").as_uint(0);
+    attrs.gid = in.attribute("gid").as_uint(defval.gid);
+    attrs.idx = in.attribute("idx").as_uint(defval.idx);
+    attrs.weak = in.attribute("weak").as_bool(defval.weak);
+    return true;
 }
 
 /**
