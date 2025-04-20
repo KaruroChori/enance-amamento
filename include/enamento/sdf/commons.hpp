@@ -183,7 +183,7 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     glm::vec2 pos2d, glm::vec3 pos3d, 
     traits_t traits, xml& oxml, 
     const path_t* paths, tree::builder& otree,
-    const visitor_t& visitor
+    const visitor_t& visitor, const cvisitor_t& cvisitor
 ){
     {self.operator()(pos3d)} -> std::same_as<typename T::attrs_t>;
     {self.sample(pos3d)} -> std::convertible_to<float>;
@@ -199,6 +199,8 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
 
     {mutself.tree_visit_pre(visitor)} -> std::same_as<bool>;
     {mutself.tree_visit_post(visitor)} -> std::same_as<bool>;
+    {self.ctree_visit_pre(cvisitor)} -> std::same_as<bool>;
+    {self.ctree_visit_post(cvisitor)} -> std::same_as<bool>;
 
     //TODO: BLOCK TO DEPRECATE
     {self.to_xml(oxml)} -> std::same_as<bool> ;

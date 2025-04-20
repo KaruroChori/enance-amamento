@@ -77,7 +77,6 @@ bool attrs2xml(const typename T::extras_t& attrs, pugi::xml_node& out){
     return false;
 }
 
-//TODO: make it const and use the const version of tree_visit_pre once ready.
 /**
  * @brief Compile an SDF into C++ code
  * 
@@ -90,13 +89,13 @@ bool sdf2cpp (sdf::sdf_i auto& usdf, std::ostream& out){
     struct entry_t{
         const char* tag;
         sdf::fields_t fields;
-        void* base;
+        const void* base;
         size_t children;
         size_t current;
     };
     std::vector<entry_t> depth = {};
 
-    static auto op = [&](const char* tag, sdf::fields_t fields, void* base, size_t children)->bool{
+    static auto op = [&](const char* tag, sdf::fields_t fields, const void* base, size_t children)->bool{
         //Handle comma separator for operator args
         if(!depth.empty()){
             auto& entry = depth.back();
@@ -140,7 +139,7 @@ bool sdf2cpp (sdf::sdf_i auto& usdf, std::ostream& out){
         return true;
     };
 
-    return usdf.tree_visit_pre(op);
+    return usdf.ctree_visit_pre(op);
 };
 
 
