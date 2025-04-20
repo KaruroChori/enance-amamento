@@ -202,7 +202,6 @@ concept sdf_i  = attrs_i<typename T::attrs_t> && requires(
     {mutself.tree_visit_post(visitor)} -> std::same_as<bool>;
 
     //TODO: BLOCK TO DEPRECATE
-    {self.to_cpp(ostrm)} -> std::same_as<bool> ;
     {self.to_xml(oxml)} -> std::same_as<bool> ;
     {self.to_tree(otree)} -> std::same_as<uint64_t> ;
     //{self.from_xml(oxml)} -> std::same_as<bool> ;

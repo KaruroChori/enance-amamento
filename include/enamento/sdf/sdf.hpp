@@ -249,7 +249,6 @@ namespace sdf{
             inline const void* addr() const;
             inline size_t children() const;
 
-            inline bool to_cpp(ostream& out) const;
             inline bool to_xml(xml& n) const;
         };
 
@@ -272,12 +271,11 @@ namespace sdf{
 
             virtual constexpr bool tree_visit_pre(const visitor_t& op) = 0;
             virtual constexpr bool tree_visit_post(const visitor_t& op) = 0;
-            virtual constexpr void* addr();
-            virtual constexpr const void* addr() const;
-            virtual constexpr size_t children() const;
+            virtual constexpr void* addr()=0;
+            virtual constexpr const void* addr() const=0;
+            virtual constexpr size_t children() const=0;
 
             virtual uint64_t to_tree(tree::builder& dst)const=0;
-            virtual bool to_cpp(ostream& dst) const=0;
             virtual bool to_xml(xml& dst) const=0;
 
             virtual ~base_dyn(){}
@@ -303,7 +301,6 @@ namespace sdf{
             virtual constexpr inline size_t children() const override{return T<Attrs,Args...>::children();}
 
             virtual uint64_t to_tree(tree::builder& dst)const override{return T<Attrs,Args...>::to_tree(dst);};
-            virtual bool to_cpp(ostream& dst) const override{return T<Attrs,Args...>::to_cpp(dst);}
             virtual bool to_xml(xml& dst) const override{return T<Attrs,Args...>::to_xml(dst);}
         };
 
@@ -326,7 +323,6 @@ namespace sdf{
             virtual constexpr inline size_t children() const override{return static_cast<const T*>(this)->children();}
 
             virtual constexpr uint64_t to_tree(tree::builder& dst)const override{return static_cast<const T*>(this)->to_tree(dst);};
-            virtual bool to_cpp(ostream& dst) const override{return static_cast<const T*>(this)->to_cpp(dst);}
             virtual bool to_xml(xml& dst) const override{return static_cast<const T*>(this)->to_xml(dst);}
             
             using T::T;
@@ -401,9 +397,6 @@ namespace sdf{
                     else if constexpr(is_specialization<L,tree_idx_ref>{}) return *(LL*)((uint8_t*)(this)-_left.offset);  
                     else return _left;
                 }
-
-                template<typename T>
-                friend bool to_cpp_from_fields_op(ostream& out, const T& node, bool trailing_comma);
 
                 template<typename T>
                 friend bool to_xml_from_fields_op(xml& out, const T& node);
@@ -498,8 +491,6 @@ namespace sdf{
                 }
 
                 template<typename T>
-                friend bool to_cpp_from_fields_op(ostream& out, const T& node, bool trailing_comma);
-                template<typename T>
                 friend bool to_xml_from_fields_op(ostream& out, const T& node);
         };   
 
@@ -517,17 +508,8 @@ namespace sdf{
     }}
 
     #if SDF_IS_HOST==true
-        #define sdf_register_primitive_ostream(NAME) \
-            dst<< #NAME "({";                                                                                   \
-            if(!serialize::fields2cpp(dst, addr(), fields()))return false;                                      \
-            dst << "{";                                                                                         \
-            if(!this->cfg.to_cpp(dst))return false;                                                             \
-            dst << "}})" ;    /* Add args */                                                                    \
-            return true;
-
         #define sdf_register_primitive_xml(NAME) return false;
     #else
-        #define sdf_register_primitive_ostream(NAME) return false;
         #define sdf_register_primitive_xml(NAME) return false;
     #endif
 
@@ -540,7 +522,6 @@ namespace sdf{
         struct NAME : impl_base::NAME<Attrs>{                                                                       \
             using attrs_t = Attrs;                                                                                  \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_cpp(ostream& out) const;                                                                        \
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<Attrs>::fields;                                                                   \
             inline fields_t fields(const path_t* steps) const;                                                      \
@@ -570,10 +551,6 @@ namespace sdf{
         uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
             auto idx= dst.push(tree::op_t:: NAME, (uint8_t*)this, sizeof( NAME<Attrs> ));                           \
             return idx;                                                                                             \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        bool  NAME <Attrs> :: to_cpp(ostream& dst)const {                                                           \
-            sdf_register_primitive_ostream(NAME)                                                                    \
         }                                                                                                           \
         template <typename Attrs>                                                                                   \
         bool  NAME <Attrs> :: to_xml(xml& dst)const {                                                               \
@@ -618,19 +595,8 @@ namespace sdf{
     /// Used to record a binary operator `NAME` across all namespaces
 
     #if SDF_IS_HOST==true
-        #define sdf_register_operator_2_ostream(NAME) \
-            dst<< #NAME "("; base::left().to_cpp(dst); dst<<","; base::right().to_cpp(dst);                     \
-            if(sizeof(NAME<A,B>::_fields)!=0){                                                                  \
-                dst<<", {";                                                                                     \
-                if(!serialize::fields2cpp(dst, addr(), fields(), false))return false;                           \
-                dst<<"}";                                                                                       \
-            }                                                                                                   \
-            dst << " )" ;                                                                                       \
-            return true;                                                                                        \
-
         #define sdf_register_operator_2_xml(NAME) return false;
     #else
-        #define sdf_register_operator_2_ostream(NAME) return false;
         #define sdf_register_operator_2_xml(NAME) return false;
     #endif
 
@@ -642,7 +608,6 @@ namespace sdf{
         struct NAME : impl_base::NAME<A,B>{                                                                         \
             using typename impl_base::NAME<A,B>::attrs_t;                                                           \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_cpp(ostream& out) const;                                                                        \
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A,B>::fields;                                                                     \
             inline fields_t fields(const path_t* steps) const;                                                      \
@@ -693,10 +658,6 @@ namespace sdf{
                 auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
                 return ret;                                                                                         \
             }                                                                                                       \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        bool  NAME <A,B> :: to_cpp(ostream& dst)const {                                                             \
-            sdf_register_operator_2_ostream(NAME);                                                                  \
         }                                                                                                           \
         template<typename A, typename B>                                                                            \
         bool  NAME <A,B> :: to_xml(xml& dst)const {                                                                 \
@@ -759,20 +720,8 @@ namespace sdf{
 
     /// Used to record a unary operator `NAME` across all namespaces
     #if SDF_IS_HOST==true
-        #define sdf_register_operator_1_ostream(NAME) \
-            dst<< #NAME "(";                                                                                    \
-            base::left().to_cpp(dst);                                                                           \
-            if(sizeof(NAME<A>::_fields)!=0){                                                                    \
-                dst<<", {";                                                                                     \
-                if(!serialize::fields2cpp(dst, addr(), fields(), false))return false;                           \
-                dst<<"}";                                                                                       \
-            }                                                                                                   \
-            dst << " )" ;    /* Add args */                                                                     \
-            return true;                                                                                        \
-            
         #define sdf_register_operator_1_xml(NAME) return false;
     #else
-        #define sdf_register_operator_1_ostream(NAME) return false;
         #define sdf_register_operator_1_xml(NAME) return false;
     #endif
 
@@ -783,7 +732,6 @@ namespace sdf{
         struct NAME : impl_base::NAME<A>{                                                                           \
             using typename impl_base::NAME<A>::attrs_t;                                                             \
             uint64_t to_tree(tree::builder& dst)const;                                                              \
-            bool to_cpp(ostream& out) const;                                                                        \
             bool to_xml(xml& out) const;                                                                            \
             using impl_base::NAME<A>::fields;                                                                       \
             inline fields_t fields(const path_t* steps) const;                                                      \
@@ -831,10 +779,6 @@ namespace sdf{
                 return ret;\
             }\
         }\
-        template<typename A>                                                                                        \
-        bool  NAME <A> :: to_cpp(ostream& dst)const {                                                               \
-            sdf_register_operator_1_ostream(NAME)                                                                   \
-        }                                                                                                           \
         template<typename A>                                                                                        \
         bool  NAME <A> :: to_xml(xml& dst)const {                                                                   \
             sdf_register_operator_1_xml(NAME)                                                                       \
@@ -1113,7 +1057,7 @@ switch(*(sdf::tree::op_t::type_t*)((uint8_t*)this-2)){\
     SDF_TREE_DISPATCH_OPERATOR2(SmoothJoin, OPERATION, RET) \
     default:\
     {\
-        printf("Fuck you! %d %p %p",*(sdf::tree::op_t::type_t*)((uint8_t*)this-2),(void*)((uint8_t*)this-2), this );\
+        printf("Fuck you! %d %p %p",*(sdf::tree::op_t::type_t*)((uint8_t*)this-2),(void*)((uint8_t*)this-2), (const void*)this );\
         RET {};\
         break;\
     }\
@@ -1135,11 +1079,6 @@ namespace utils{
         return {};
     }
 
-    template<typename Attrs>
-    inline bool tree_idx<Attrs>::to_cpp(ostream& out) const{
-        SDF_TREE_DISPATCH(to_cpp(out),return);
-        return true;
-    }
 
     template<typename Attrs>
     inline bool tree_idx<Attrs>::to_xml(xml& out) const{

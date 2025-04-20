@@ -1,12 +1,8 @@
 #include <iostream>
-#include <chrono>
-#include <cmath>
 
 #include <omp.h>
-#include <mutex>
-#include <future>
 #include <dlfcn.h>
-#include <sstream>
+#include <type_traits>
 
 //#define GLM_FORCE_PURE
 #define GLM_FORCE_INLINE
@@ -84,7 +80,7 @@ int main(int argc, const char** argv) {
         }catch(...){}
     }
 
-    fromXML->to_cpp((sdf::ostream&)std::cout); 
+    sdf::serialize::sdf2cpp(*fromXML,std::cout); 
     std::print("\n");
  
     sdf::tree::builder builder; 
@@ -144,23 +140,8 @@ int main(int argc, const char** argv) {
 
     };
 
-    +[](sdf::fields_t fields){};
 
-    SDF_MIX_ALL.tree_visit_pre([](const char* tag, sdf::fields_t fields, void* base, size_t children)->bool{
-        static std::vector<std::pair<size_t,size_t>> depth = {};
-
-        std::cout<<tag<<"\n";
-        sdf::serialize::fields2cpp(std::cout, base, fields);
-        if(depth.empty())return true;
-
-        auto& entry = depth.back();
-        if(entry.second==0)depth.pop_back();
-        else entry.second--;
-
-        if(children!=0)depth.push_back({children,children});
-
-        return true;
-    });
+    sdf::serialize::sdf2cpp(SDF_MIX_ALL,std::cout);
 
     //pipeline::demo<decltype(SDF_BASE_W1)> PIPERINE(DEVICE,SDF_BASE_W1,materials,sizeof(materials)/sizeof(pipeline::material_t));
     pipeline::demo<decltype(SDF_MIX_ALL)> PIPERINE(DEVICE,SDF_MIX_ALL,materials,sizeof(materials)/sizeof(pipeline::material_t));

@@ -48,11 +48,12 @@ struct material_t{
     
     struct albedo_t{
         enum{COLOR, TRIPLANAR, STYLEBLIT} type;
+        struct color_t{
+            glm::vec3    rgb;
+            float   transmission;
+        };
         union{
-            struct{
-                glm::vec3    rgb;
-                float   transmission;
-            } color;
+            color_t     color;
             res_ref     triplanar;
             res_ref     stylebit;
         };

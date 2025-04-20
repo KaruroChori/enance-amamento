@@ -1,8 +1,10 @@
+#define SDF_HEADLESS
 #include <enamento/sdf/sdf.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
 
 using namespace sdf::comptime;
+using namespace glm;
 
 int main(){
     auto sdf_0 = Sphere({1, {.idx=1}});
