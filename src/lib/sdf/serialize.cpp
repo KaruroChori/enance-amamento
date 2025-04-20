@@ -1,5 +1,6 @@
 #define SDF_HEADLESS
 #include "sdf/commons.hpp"
+#include <format>
 
 namespace sdf{
 namespace serialize{

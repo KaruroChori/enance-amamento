@@ -1,5 +1,15 @@
 vssdf = library(
     'enamento-sdf',
+    [],
+    install: true,
+    cpp_args: [openmp_compile_args],
+    link_args: [openmp_link_args],
+    dependencies: [magic_enum_dep, imgui_dep, pugixml_dep, libstub_dep],
+    include_directories: include_dirs,
+)
+
+vssdf_serialize = library(
+    'enamento-serialize',
     ['serialize.cpp'],
     install: true,
     cpp_args: [openmp_compile_args],
@@ -19,4 +29,9 @@ install_subdir('../../../include/enamento/sdf', install_dir : 'include/enamento'
 vssdf_dep = declare_dependency(
     include_directories: include_dirs,
     link_with: vssdf,
+)
+
+vssdf_serialize_dep = declare_dependency(
+    include_directories: include_dirs,
+    link_with: vssdf_serialize,
 )

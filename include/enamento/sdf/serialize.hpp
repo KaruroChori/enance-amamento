@@ -11,19 +11,14 @@
  */
 
 #include "sdf/commons.hpp"
-#ifndef SDF_INTERNALS
-#error Don't import manually, this can only be used internally by the library
-#endif
 
-#include "sdf.hpp"
 #include <ostream>
-#include <format>
+#include <pugixml.hpp>
 
 namespace sdf{
 
 namespace serialize{
 
-    
 /**
  * @brief Convert fields from an SDF node to cpp code.
  * 
@@ -47,6 +42,18 @@ bool fields2cpp (std::ostream& out, const void * node, fields_t fields, bool tra
  */
 bool map2fields (const std::map<std::string,std::string>& map, const void * node, fields_t fields);
 
+/**
+ * @brief Apply the content of an xml node onto an SDF node.
+ * 
+ * @param xml 
+ * @param node 
+ * @param fields 
+ * @return true 
+ * @return false 
+ */
+bool xml2fields (const pugi::xml_node& xml, const void * node, fields_t fields);
+
+
 template<sdf::attrs_i T>
 bool attrs2cpp(const typename T::extras_t& attrs, std::ostream& out){
     return false;
@@ -64,6 +71,11 @@ bool attrs2cpp<sdf::color_attrs>(const sdf::color_attrs::extras_t& attrs, std::o
     return true;
 }
 
+//TODO: implements the other cases
+template<sdf::attrs_i T>
+bool attrs2xml(const typename T::extras_t& attrs, pugi::xml_node& out){
+    return false;
+}
 
 //TODO: make it const and use the const version of tree_visit_pre once ready.
 /**

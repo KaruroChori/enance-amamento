@@ -12,6 +12,7 @@
 //This needs to be here BEFORE the first usage of sdf.hpp if shared slots for textures and buffers are desired.
 #include "shared-slots.hpp"
 #include <sdf/sdf.hpp>
+#include <sdf/serialize.hpp>
 
 #include <ui/ui.hpp>
 
