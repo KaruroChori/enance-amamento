@@ -66,19 +66,6 @@ namespace sdf{
                 //TODO: Possibly revise this one. For now it copies.
                 return this->src.to_tree(dst);
             }
-
-            bool to_cpp(ostream& dst) const{
-                #if SDF_IS_HOST==true
-                    dst<<std::format("Forward(node_{})",(void*)&(this->src));
-                    return true;
-                #else
-                    return false;
-                #endif
-            }
-    
-            bool to_xml(xml& dst) const{
-                return false;
-            }
         };
 
   
@@ -110,19 +97,6 @@ namespace sdf{
             uint64_t to_tree(tree::builder& dst)const final{
                 //TODO: Possibly revise this one. For now it copies.
                 return src->to_tree(dst);
-            }
-
-            bool to_cpp(ostream& dst) const final{
-                #if SDF_IS_HOST==true
-                    dst<<std::format("Forward(node_{})",(void*)(&src));
-                    return true;
-                #else
-                    return false;
-                #endif
-            }
-
-            bool to_xml(xml& dst) const final{
-                return false;
             }
         };
 

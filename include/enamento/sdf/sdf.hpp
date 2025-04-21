@@ -14,8 +14,6 @@
     #pragma omp requires unified_shared_memory
 #endif
 
-#pragma 
-
 //TODO: Remove the experimental feature by using a custom implementation
 #include <experimental/type_traits>
 #include <cstdlib>
@@ -296,6 +294,7 @@ namespace sdf{
                         static_assert(sdf_i<typename R::element_type>);
                     }
                     else if constexpr(is_specialization<L,tree_idx_ref>{}){
+                        //TODO: Find a decent way sto make these static assertions work as intended
                         //static_assert(std::is_same<typename L::element_type::attrs_t,typename R::element_type::attrs_t>() );
                         //static_assert(sdf_i<typename L::element_type>);
                         //static_assert(sdf_i<typename R::element_type>);
@@ -353,385 +352,6 @@ namespace sdf{
         using namespace glm;
     }}
 
-    /// Used to record a primitive `NAME` across all namespaces
-    #define sdf_register_primitive(NAME)                                                                            \
-    namespace{                                                                                                      \
-        namespace impl{                                                                                             \
-        template <typename Attrs=default_attrs>                                                                     \
-        struct NAME : impl_base::NAME<Attrs>{                                                                       \
-            using attrs_t = Attrs;                                                                                  \
-            uint64_t to_tree(tree::builder& dst)const;                                                              \
-            using impl_base::NAME<Attrs>::fields;                                                                   \
-            inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
-            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
-            constexpr bool ctree_visit_pre(const cvisitor_t& op) const;                                             \
-            constexpr bool ctree_visit_post(const cvisitor_t& op) const;                                            \
-            constexpr inline void* addr(){return (void*)this;}                                                      \
-            constexpr inline const void* addr()const{return (const void*)this;}                                     \
-            constexpr inline size_t children() const{return 0;}                                                     \
-            using impl_base::NAME<Attrs>::NAME;                                                                     \
-        };                                                                                                          \
-        template <typename Attrs>                                                                                   \
-        fields_t  NAME <Attrs> :: fields(const path_t* steps)const {                                                \
-            if(steps[0]==END){                                                                                      \
-                return this->fields();                                                                              \
-            }                                                                                                       \
-            return {nullptr,0};                                                                                     \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        constexpr bool NAME <Attrs> :: tree_visit_pre(const visitor_t& op){                                         \
-            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        constexpr bool NAME <Attrs> :: tree_visit_post(const visitor_t& op){                                        \
-            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        constexpr bool NAME <Attrs> :: ctree_visit_pre(const cvisitor_t& op) const{                                 \
-            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        constexpr bool NAME <Attrs> :: ctree_visit_post(const cvisitor_t& op) const{                                \
-            return op(this->name(),this->fields(),this->addr(),this->children());                                   \
-        }                                                                                                           \
-        template <typename Attrs>                                                                                   \
-        uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
-            auto idx= dst.push(tree::op_t:: NAME, (uint8_t*)this, sizeof( NAME<Attrs> ));                           \
-            return idx;                                                                                             \
-        }                                                                                                           \
-    }                                                                                                               \
-    }                                                                                                               \
-    namespace comptime {                                                                                            \
-        template <typename Attrs=default_attrs>                                                                     \
-        using NAME##_t = utils::primitive<Attrs,impl::NAME >;                                                       \
-        template <typename Attrs=default_attrs>                                                                     \
-        constexpr inline NAME##_t<Attrs> NAME (  impl::NAME<Attrs> && ref ){                                        \
-            return ref;                                                                                             \
-        }                                                                                                           \
-    }                                                                                                               \
-    namespace polymorphic {                                                                                         \
-        template <typename Attrs=default_attrs>                                                                     \
-        using NAME##_t = utils::dyn<Attrs,impl::NAME >;                                                             \
-        template <typename Attrs=default_attrs>                                                                     \
-        constexpr inline NAME##_t<Attrs> NAME (  impl::NAME<Attrs> && ref ){                                        \
-            return ref;                                                                                             \
-        }                                                                                                           \
-    }                                                                                                               \
-    namespace dynamic {                                                                                             \
-        template <typename Attrs=default_attrs>                                                                     \
-        using NAME##_t =utils::dyn<Attrs,impl::NAME >;                                                              \
-        template <typename Attrs=default_attrs>                                                                     \
-        constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME (  impl::NAME<Attrs> && ref ){                \
-            std::shared_ptr<utils::base_dyn<Attrs>> tmp =                                                           \
-                std::make_shared<utils::dyn<Attrs,impl::NAME>>(utils::dyn<Attrs,impl::NAME>(ref));                  \
-            return tmp;                                                                                             \
-        }                                                                                                           \
-    }                                                                                                               \
-
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-
-    //TODO: Direct dependencies from configs::XXX have been removed in operator_1 to allow arbitrary (template) cfg. 
-    //      Adapt here as well first time this is needed for a binary operator.
-
-    /// Used to record a binary operator `NAME` across all namespaces
-
-    #if SDF_IS_HOST==true
-        #define sdf_register_operator_2_xml(NAME) return false;
-    #else
-        #define sdf_register_operator_2_xml(NAME) return false;
-    #endif
-
-
-    #define sdf_register_operator_2(NAME)                                                                           \
-    namespace{                                                                                                      \
-    namespace impl{                                                                                                 \
-        template <typename A, typename B>                                                                           \
-        struct NAME : impl_base::NAME<A,B>{                                                                         \
-            using typename impl_base::NAME<A,B>::attrs_t;                                                           \
-            uint64_t to_tree(tree::builder& dst)const;                                                              \
-            using impl_base::NAME<A,B>::fields;                                                                     \
-            inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
-            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
-            constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                              \
-            constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                             \
-            constexpr inline void* addr(){return (void*)this;}                                                      \
-            constexpr inline const void* addr()const{return (const void*)this;}                                     \
-            constexpr inline size_t children() const{return 2;}                                                     \
-            using impl_base::NAME<A,B>::NAME;                                                                       \
-            using typename impl_base::NAME<A,B>::base;                                                              \
-        };                                                                                                          \
-        template<typename A, typename B>                                                                            \
-        fields_t NAME <A,B> :: fields(const path_t* steps)const {                                                   \
-            if(steps[0]==END){                                                                                      \
-                return this->fields();                                                                              \
-            }                                                                                                       \
-            else{                                                                                                   \
-                if(steps[0]==LEFT){return this->left().fields(steps+1);}                                            \
-                else {return this->right().fields(steps+1);}                                                        \
-            }                                                                                                       \
-            return {nullptr,0};                                                                                     \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        constexpr bool NAME <A,B> :: tree_visit_pre(const visitor_t& op){                                           \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            auto lval = this->left().tree_visit_pre(op);                                                            \
-            auto rval = this->right().tree_visit_pre(op);                                                           \
-            return sval && lval && rval;                                                                            \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        constexpr bool NAME <A,B> :: tree_visit_post(const visitor_t& op){                                          \
-            auto lval = this->left().tree_visit_post(op);                                                           \
-            auto rval = this->right().tree_visit_post(op);                                                          \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            return sval && lval && rval;                                                                            \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        constexpr bool NAME <A,B> :: ctree_visit_pre(const cvisitor_t& op)const{                                    \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            auto lval = this->left().ctree_visit_pre(op);                                                           \
-            auto rval = this->right().ctree_visit_pre(op);                                                          \
-            return sval && lval && rval;                                                                            \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        constexpr bool NAME <A,B> :: ctree_visit_post(const cvisitor_t& op)const{                                   \
-            auto lval = this->left().ctree_visit_post(op);                                                          \
-            auto rval = this->right().ctree_visit_post(op);                                                         \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            return sval && lval && rval;                                                                            \
-        }                                                                                                           \
-        template<typename A, typename B>                                                                            \
-        uint64_t NAME <A,B> :: to_tree(tree::builder& dst)const {                                                   \
-            auto lname= base::left().to_tree(dst);                                                                  \
-            auto rname = base::right().to_tree(dst);                                                                \
-            if constexpr(std::is_same<typename base::cfg_t, utils::empty_t>()){                                     \
-                NAME <utils::tree_idx_ref<utils::tree_idx<A>>,utils::tree_idx_ref<utils::tree_idx<B>>> tmp({(uint16_t)(dst.next()-lname)},{(uint16_t)(dst.next()-rname)});          \
-                auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
-                return ret;                                                                                         \
-            }                                                                                                       \
-            else{                                                                                                   \
-                NAME <utils::tree_idx_ref<utils::tree_idx<A>>,utils::tree_idx_ref<utils::tree_idx<B>>> tmp({(uint16_t)(dst.next()-lname)},{(uint16_t)(dst.next()-rname)}, this->cfg);\
-                auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
-                return ret;                                                                                         \
-            }                                                                                                       \
-        }                                                                                                           \
-    }}                                                                                                              \
-    namespace comptime {                                                                                            \
-        constexpr inline auto NAME(auto&& a, auto&& b){                                                             \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            using right_t = std::remove_reference<decltype(b)>::type;                                               \
-            static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t>>, "Operator must be derived from binary_op");\
-            return impl::NAME <left_t, right_t>(a,b);                                                               \
-        };                                                                                                          \
-        constexpr inline auto NAME(auto&& a, auto&& b, const typename configs:: NAME& cfg){                         \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            using right_t = std::remove_reference<decltype(b)>::type;                                               \
-            static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t,configs:: NAME>>, "Operator must be derived from binary_op");\
-            return impl::NAME <left_t, right_t>(a,b,cfg);                                                           \
-        };                                                                                                          \
-    }                                                                                                               \
-    namespace polymorphic {                                                                                         \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline auto NAME(auto&& a, auto&& b){                                                             \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            using right_t = std::remove_reference<decltype(b)>::type;                                               \
-            return utils::dyn_op<Attrs,impl::NAME<left_t,right_t>>(a,b);                                            \
-        };                                                                                                          \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline auto NAME(auto&& a, auto&& b, const typename configs:: NAME& cfg){                         \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            using right_t = std::remove_reference<decltype(b)>::type;                                               \
-            static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t,configs:: NAME>>, "Operator must be derived from binary_op");\
-            return utils::dyn_op<Attrs,impl::NAME <left_t, right_t>>(a,b,cfg);                                      \
-        };                                                                                                          \
-    }                                                                                                               \
-    namespace dynamic {                                                                                             \
-        template<typename Attrs=default_attrs>                                                                      \
-        using NAME##_t=utils::dyn_op<Attrs,impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>,std::shared_ptr<utils::base_dyn<Attrs>>>>;\
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
-        (                                                                                                           \
-            std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
-            std::shared_ptr<utils::base_dyn<Attrs>> b                                                               \
-        ){                                                                                                          \
-            return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a),decltype(b)>>>(a,b);                 \
-        }                                                                                                           \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
-        (                                                                                                           \
-            std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
-            std::shared_ptr<utils::base_dyn<Attrs>> b,                                                              \
-            const typename configs:: NAME& cfg                                                                      \
-        ){                                                                                                          \
-            return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a),decltype(b)>>>(a,b,cfg);             \
-        }                                                                                                           \
-    }                                                                                                               \
-
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-    /// Used to record a unary operator `NAME` across all namespaces
-    #if SDF_IS_HOST==true
-        #define sdf_register_operator_1_xml(NAME) return false;
-    #else
-        #define sdf_register_operator_1_xml(NAME) return false;
-    #endif
-
-    #define sdf_register_operator_1(NAME)                                                                           \
-    namespace{                                                                                                      \
-    namespace impl{                                                                                                 \
-        template <typename A>                                                                                       \
-        struct NAME : impl_base::NAME<A>{                                                                           \
-            using typename impl_base::NAME<A>::attrs_t;                                                             \
-            uint64_t to_tree(tree::builder& dst)const;                                                              \
-            using impl_base::NAME<A>::fields;                                                                       \
-            inline fields_t fields(const path_t* steps) const;                                                      \
-            constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
-            constexpr bool tree_visit_post(const visitor_t& op);                                                    \
-            constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                              \
-            constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                             \
-            constexpr inline void* addr(){return (void*)this;}                                                      \
-            constexpr inline const void* addr()const{return (void*)this;}                                           \
-            constexpr inline size_t children() const{return 1;}                                                     \
-            using impl_base::NAME<A>::NAME;                                                                         \
-            using typename impl_base::NAME<A>::base;                                                                \
-        };                                                                                                          \
-        template<typename A>                                                                                        \
-        fields_t  NAME <A> :: fields(const path_t* steps)const {                                                    \
-            if(steps[0]==END){                                                                                      \
-                return this->fields();                                                                              \
-            }                                                                                                       \
-            else{                                                                                                   \
-                if(steps[0]==LEFT){return this->left().fields(steps+1);}                                            \
-            }                                                                                                       \
-            return {nullptr,0};                                                                                     \
-        }                                                                                                           \
-        template<typename A>                                                                                        \
-        constexpr bool NAME <A> :: tree_visit_pre(const visitor_t& op){                                             \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            auto lval = this->left().tree_visit_pre(op);                                                            \
-            return sval && lval;                                                                                    \
-        }                                                                                                           \
-        template<typename A>                                                                                        \
-        constexpr bool NAME <A> :: tree_visit_post(const visitor_t& op){                                            \
-            auto lval = this->left().tree_visit_post(op);                                                           \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            return sval && lval;                                                                                    \
-        }                                                                                                           \
-        template<typename A>                                                                                        \
-        constexpr bool NAME <A> :: ctree_visit_pre(const cvisitor_t& op) const{                                     \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            auto lval = this->left().ctree_visit_pre(op);                                                           \
-            return sval && lval;                                                                                    \
-        }                                                                                                           \
-        template<typename A>                                                                                        \
-        constexpr bool NAME <A> :: ctree_visit_post(const cvisitor_t& op) const{                                    \
-            auto lval = this->left().ctree_visit_post(op);                                                          \
-            auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
-            return sval && lval;                                                                                    \
-        }                                                                                                           \
-        template<typename A>\
-        uint64_t NAME <A> :: to_tree(tree::builder& dst)const {\
-            auto lname= base::left().to_tree(dst);\
-            if constexpr(std::is_same<typename base::cfg_t, utils::empty_t>()){\
-                NAME <utils::tree_idx_ref<utils::tree_idx<A>>> tmp({(uint16_t)(dst.next()-lname)});\
-                auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));\
-                return ret;\
-            }\
-            else{\
-                NAME <utils::tree_idx_ref<utils::tree_idx<A>>> tmp({(uint16_t)(dst.next()-lname)}, this->cfg);\
-                auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));\
-                return ret;\
-            }\
-        }\
-    }}\
-    namespace comptime {                                                                                            \
-        constexpr inline auto NAME(auto&& a){                                                                       \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t>>, "Operator must be derived from unary_op");\
-            return impl::NAME <left_t>(a);                                                                          \
-        };                                                                                                          \
-        constexpr inline auto NAME(auto&& a, const typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t & cfg){                                  \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t,typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t>>, "Operator must be derived from unary_op");\
-            return impl::NAME <left_t>(a,cfg);                                                                      \
-        };                                                                                                          \
-    }                                                                                                               \
-    namespace polymorphic {                                                                                         \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline auto NAME(auto&& a){                                                                       \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            return utils::dyn_op<Attrs,impl::NAME<left_t>>(a);                                                      \
-        };                                                                                                          \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline auto NAME(auto&& a, const typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t & cfg){                                   \
-            using left_t = std::remove_reference<decltype(a)>::type;                                                \
-            static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t,typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t>>, "Operator must be derived from unary_op");\
-            return utils::dyn_op<Attrs,impl::NAME <left_t>>(a,cfg);                                                 \
-        };                                                                                                          \
-    }                                                                                                               \
-    namespace dynamic {         \
-        template<typename Attrs=default_attrs>                                                                      \
-        using NAME##_t=utils::dyn_op<Attrs,impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>>>;                    \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
-        (                                                                                                           \
-            std::shared_ptr<utils::base_dyn<Attrs>> a                                                               \
-        ){                                                                                                          \
-            return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a)>>>(a);                               \
-        }                                                                                                           \
-        template<typename Attrs=default_attrs>                                                                      \
-        constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
-        (                                                                                                           \
-            std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
-            const typename impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>>::base::cfg_t& cfg                    \
-        ){                                                                                                          \
-            return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a)>>>(a,cfg);                           \
-        }                                                                                                           \
-    }  
-
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-    /// Used to record a binary operator `NAME` across all namespaces and an operator overload for it
-    #define sdf_register_operator_2o(NAME, OP)                                                                      \
-    sdf_register_operator_2(NAME)                                                                                   \
-    namespace comptime {                                                                                    \
-        template <typename A, typename B> requires sdf_i<A> && sdf_i<B>   \
-        constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
-    }                                                                                                               \
-    namespace polymorphic {                                                                                 \
-        template <typename A, typename B> requires sdf_i<A> && sdf_i<B>   \
-        constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
-    }                                                                                                               \
-    namespace dynamic {                                                                                     \
-        template <typename A, typename B> requires sdf_i<A> && sdf_i<B>   \
-        constexpr inline auto operator OP (std::shared_ptr<A> a, std::shared_ptr<B> b){return NAME(a,b);}           \
-    }                                                                                                               \
-  
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-
-    /// Used to record a unary operator `NAME` across all namespaces and an operator overload for it
-    #define sdf_register_operator_1o(NAME, OP)                                                                      \
-    sdf_register_operator_1(NAME)                                                                                   \
-    namespace comptime {                                                                                            \
-        template <typename A> requires sdf_i<A>                                                \
-        constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
-    }                                                                                                               \
-    namespace polymorphic {                                                                                         \
-        template <typename T> requires sdf_i<A>                                                \
-        constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
-    }                                                                                                               \
-    namespace dynamic {                                                                                             \
-        template <typename A> requires sdf_i<A>                                                \
-        constexpr inline auto operator OP (std::shared_ptr<A> a){return NAME(a);}                                   \
-    }                                                                                                               \
-
 
     //Dynamic is not needed in base mode, as smart pointers on which it is built upon are not C.
 
@@ -752,7 +372,377 @@ namespace sdf{
      * 
      */
     namespace dynamic{}
+
 }
+
+
+/* #region macro-machinery */
+
+/// Used to record a primitive `NAME` across all namespaces
+#define sdf_register_primitive(NAME)                                                                            \
+namespace{                                                                                                      \
+    namespace impl{                                                                                             \
+    template <typename Attrs=default_attrs>                                                                     \
+    struct NAME : impl_base::NAME<Attrs>{                                                                       \
+        using attrs_t = Attrs;                                                                                  \
+        uint64_t to_tree(tree::builder& dst)const;                                                              \
+        using impl_base::NAME<Attrs>::fields;                                                                   \
+        inline fields_t fields(const path_t* steps) const;                                                      \
+        constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+        constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+        constexpr bool ctree_visit_pre(const cvisitor_t& op) const;                                             \
+        constexpr bool ctree_visit_post(const cvisitor_t& op) const;                                            \
+        constexpr inline void* addr(){return (void*)this;}                                                      \
+        constexpr inline const void* addr()const{return (const void*)this;}                                     \
+        constexpr inline size_t children() const{return 0;}                                                     \
+        using impl_base::NAME<Attrs>::NAME;                                                                     \
+    };                                                                                                          \
+    template <typename Attrs>                                                                                   \
+    fields_t  NAME <Attrs> :: fields(const path_t* steps)const {                                                \
+        if(steps[0]==END){                                                                                      \
+            return this->fields();                                                                              \
+        }                                                                                                       \
+        return {nullptr,0};                                                                                     \
+    }                                                                                                           \
+    template <typename Attrs>                                                                                   \
+    constexpr bool NAME <Attrs> :: tree_visit_pre(const visitor_t& op){                                         \
+        return op(this->name(),this->fields(),this->addr(),this->children());                                   \
+    }                                                                                                           \
+    template <typename Attrs>                                                                                   \
+    constexpr bool NAME <Attrs> :: tree_visit_post(const visitor_t& op){                                        \
+        return op(this->name(),this->fields(),this->addr(),this->children());                                   \
+    }                                                                                                           \
+    template <typename Attrs>                                                                                   \
+    constexpr bool NAME <Attrs> :: ctree_visit_pre(const cvisitor_t& op) const{                                 \
+        return op(this->name(),this->fields(),this->addr(),this->children());                                   \
+    }                                                                                                           \
+    template <typename Attrs>                                                                                   \
+    constexpr bool NAME <Attrs> :: ctree_visit_post(const cvisitor_t& op) const{                                \
+        return op(this->name(),this->fields(),this->addr(),this->children());                                   \
+    }                                                                                                           \
+    template <typename Attrs>                                                                                   \
+    uint64_t  NAME <Attrs> :: to_tree(tree::builder& dst)const {                                                \
+        auto idx= dst.push(tree::op_t:: NAME, (uint8_t*)this, sizeof( NAME<Attrs> ));                           \
+        return idx;                                                                                             \
+    }                                                                                                           \
+}                                                                                                               \
+}                                                                                                               \
+namespace comptime {                                                                                            \
+    template <typename Attrs=default_attrs>                                                                     \
+    using NAME##_t = utils::primitive<Attrs,impl::NAME >;                                                       \
+    template <typename Attrs=default_attrs>                                                                     \
+    constexpr inline NAME##_t<Attrs> NAME (  impl::NAME<Attrs> && ref ){                                        \
+        return ref;                                                                                             \
+    }                                                                                                           \
+}                                                                                                               \
+namespace polymorphic {                                                                                         \
+    template <typename Attrs=default_attrs>                                                                     \
+    using NAME##_t = utils::dyn<Attrs,impl::NAME >;                                                             \
+    template <typename Attrs=default_attrs>                                                                     \
+    constexpr inline NAME##_t<Attrs> NAME (  impl::NAME<Attrs> && ref ){                                        \
+        return ref;                                                                                             \
+    }                                                                                                           \
+}                                                                                                               \
+namespace dynamic {                                                                                             \
+    template <typename Attrs=default_attrs>                                                                     \
+    using NAME##_t =utils::dyn<Attrs,impl::NAME >;                                                              \
+    template <typename Attrs=default_attrs>                                                                     \
+    constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME (  impl::NAME<Attrs> && ref ){                \
+        std::shared_ptr<utils::base_dyn<Attrs>> tmp =                                                           \
+            std::make_shared<utils::dyn<Attrs,impl::NAME>>(utils::dyn<Attrs,impl::NAME>(ref));                  \
+        return tmp;                                                                                             \
+    }                                                                                                           \
+}                                                                                                               \
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+//TODO: Direct dependencies from configs::XXX have been removed in operator_1 to allow arbitrary (template) cfg. 
+//      Adapt here as well first time this is needed for a binary operator.
+
+/// Used to record a binary operator `NAME` across all namespaces
+
+#define sdf_register_operator_2(NAME)                                                                           \
+namespace{                                                                                                      \
+namespace impl{                                                                                                 \
+    template <typename A, typename B>                                                                           \
+    struct NAME : impl_base::NAME<A,B>{                                                                         \
+        using typename impl_base::NAME<A,B>::attrs_t;                                                           \
+        uint64_t to_tree(tree::builder& dst)const;                                                              \
+        using impl_base::NAME<A,B>::fields;                                                                     \
+        inline fields_t fields(const path_t* steps) const;                                                      \
+        constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+        constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+        constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                              \
+        constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                             \
+        constexpr inline void* addr(){return (void*)this;}                                                      \
+        constexpr inline const void* addr()const{return (const void*)this;}                                     \
+        constexpr inline size_t children() const{return 2;}                                                     \
+        using impl_base::NAME<A,B>::NAME;                                                                       \
+        using typename impl_base::NAME<A,B>::base;                                                              \
+    };                                                                                                          \
+    template<typename A, typename B>                                                                            \
+    fields_t NAME <A,B> :: fields(const path_t* steps)const {                                                   \
+        if(steps[0]==END){                                                                                      \
+            return this->fields();                                                                              \
+        }                                                                                                       \
+        else{                                                                                                   \
+            if(steps[0]==LEFT){return this->left().fields(steps+1);}                                            \
+            else {return this->right().fields(steps+1);}                                                        \
+        }                                                                                                       \
+        return {nullptr,0};                                                                                     \
+    }                                                                                                           \
+    template<typename A, typename B>                                                                            \
+    constexpr bool NAME <A,B> :: tree_visit_pre(const visitor_t& op){                                           \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        auto lval = this->left().tree_visit_pre(op);                                                            \
+        auto rval = this->right().tree_visit_pre(op);                                                           \
+        return sval && lval && rval;                                                                            \
+    }                                                                                                           \
+    template<typename A, typename B>                                                                            \
+    constexpr bool NAME <A,B> :: tree_visit_post(const visitor_t& op){                                          \
+        auto lval = this->left().tree_visit_post(op);                                                           \
+        auto rval = this->right().tree_visit_post(op);                                                          \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        return sval && lval && rval;                                                                            \
+    }                                                                                                           \
+    template<typename A, typename B>                                                                            \
+    constexpr bool NAME <A,B> :: ctree_visit_pre(const cvisitor_t& op)const{                                    \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        auto lval = this->left().ctree_visit_pre(op);                                                           \
+        auto rval = this->right().ctree_visit_pre(op);                                                          \
+        return sval && lval && rval;                                                                            \
+    }                                                                                                           \
+    template<typename A, typename B>                                                                            \
+    constexpr bool NAME <A,B> :: ctree_visit_post(const cvisitor_t& op)const{                                   \
+        auto lval = this->left().ctree_visit_post(op);                                                          \
+        auto rval = this->right().ctree_visit_post(op);                                                         \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        return sval && lval && rval;                                                                            \
+    }                                                                                                           \
+    template<typename A, typename B>                                                                            \
+    uint64_t NAME <A,B> :: to_tree(tree::builder& dst)const {                                                   \
+        auto lname= base::left().to_tree(dst);                                                                  \
+        auto rname = base::right().to_tree(dst);                                                                \
+        if constexpr(std::is_same<typename base::cfg_t, utils::empty_t>()){                                     \
+            NAME <utils::tree_idx_ref<utils::tree_idx<A>>,utils::tree_idx_ref<utils::tree_idx<B>>> tmp({(uint16_t)(dst.next()-lname)},{(uint16_t)(dst.next()-rname)});          \
+            auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
+            return ret;                                                                                         \
+        }                                                                                                       \
+        else{                                                                                                   \
+            NAME <utils::tree_idx_ref<utils::tree_idx<A>>,utils::tree_idx_ref<utils::tree_idx<B>>> tmp({(uint16_t)(dst.next()-lname)},{(uint16_t)(dst.next()-rname)}, this->cfg);\
+            auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
+            return ret;                                                                                         \
+        }                                                                                                       \
+    }                                                                                                           \
+}}                                                                                                              \
+namespace comptime {                                                                                            \
+    constexpr inline auto NAME(auto&& a, auto&& b){                                                             \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        using right_t = std::remove_reference<decltype(b)>::type;                                               \
+        static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t>>, "Operator must be derived from binary_op");\
+        return impl::NAME <left_t, right_t>(a,b);                                                               \
+    };                                                                                                          \
+    constexpr inline auto NAME(auto&& a, auto&& b, const typename configs:: NAME& cfg){                         \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        using right_t = std::remove_reference<decltype(b)>::type;                                               \
+        static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t,configs:: NAME>>, "Operator must be derived from binary_op");\
+        return impl::NAME <left_t, right_t>(a,b,cfg);                                                           \
+    };                                                                                                          \
+}                                                                                                               \
+namespace polymorphic {                                                                                         \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline auto NAME(auto&& a, auto&& b){                                                             \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        using right_t = std::remove_reference<decltype(b)>::type;                                               \
+        return utils::dyn_op<Attrs,impl::NAME<left_t,right_t>>(a,b);                                            \
+    };                                                                                                          \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline auto NAME(auto&& a, auto&& b, const typename configs:: NAME& cfg){                         \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        using right_t = std::remove_reference<decltype(b)>::type;                                               \
+        static_assert(std::derived_from<impl:: NAME <left_t,right_t>, utils::binary_op<left_t,right_t,configs:: NAME>>, "Operator must be derived from binary_op");\
+        return utils::dyn_op<Attrs,impl::NAME <left_t, right_t>>(a,b,cfg);                                      \
+    };                                                                                                          \
+}                                                                                                               \
+namespace dynamic {                                                                                             \
+    template<typename Attrs=default_attrs>                                                                      \
+    using NAME##_t=utils::dyn_op<Attrs,impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>,std::shared_ptr<utils::base_dyn<Attrs>>>>;\
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
+    (                                                                                                           \
+        std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
+        std::shared_ptr<utils::base_dyn<Attrs>> b                                                               \
+    ){                                                                                                          \
+        return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a),decltype(b)>>>(a,b);                 \
+    }                                                                                                           \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
+    (                                                                                                           \
+        std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
+        std::shared_ptr<utils::base_dyn<Attrs>> b,                                                              \
+        const typename configs:: NAME& cfg                                                                      \
+    ){                                                                                                          \
+        return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a),decltype(b)>>>(a,b,cfg);             \
+    }                                                                                                           \
+}                                                                                                               \
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+#define sdf_register_operator_1(NAME)                                                                           \
+namespace{                                                                                                      \
+namespace impl{                                                                                                 \
+    template <typename A>                                                                                       \
+    struct NAME : impl_base::NAME<A>{                                                                           \
+        using typename impl_base::NAME<A>::attrs_t;                                                             \
+        uint64_t to_tree(tree::builder& dst)const;                                                              \
+        using impl_base::NAME<A>::fields;                                                                       \
+        inline fields_t fields(const path_t* steps) const;                                                      \
+        constexpr bool tree_visit_pre(const visitor_t& op);                                                     \
+        constexpr bool tree_visit_post(const visitor_t& op);                                                    \
+        constexpr bool ctree_visit_pre(const cvisitor_t& op)const;                                              \
+        constexpr bool ctree_visit_post(const cvisitor_t& op)const;                                             \
+        constexpr inline void* addr(){return (void*)this;}                                                      \
+        constexpr inline const void* addr()const{return (void*)this;}                                           \
+        constexpr inline size_t children() const{return 1;}                                                     \
+        using impl_base::NAME<A>::NAME;                                                                         \
+        using typename impl_base::NAME<A>::base;                                                                \
+    };                                                                                                          \
+    template<typename A>                                                                                        \
+    fields_t  NAME <A> :: fields(const path_t* steps)const {                                                    \
+        if(steps[0]==END){                                                                                      \
+            return this->fields();                                                                              \
+        }                                                                                                       \
+        else{                                                                                                   \
+            if(steps[0]==LEFT){return this->left().fields(steps+1);}                                            \
+        }                                                                                                       \
+        return {nullptr,0};                                                                                     \
+    }                                                                                                           \
+    template<typename A>                                                                                        \
+    constexpr bool NAME <A> :: tree_visit_pre(const visitor_t& op){                                             \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        auto lval = this->left().tree_visit_pre(op);                                                            \
+        return sval && lval;                                                                                    \
+    }                                                                                                           \
+    template<typename A>                                                                                        \
+    constexpr bool NAME <A> :: tree_visit_post(const visitor_t& op){                                            \
+        auto lval = this->left().tree_visit_post(op);                                                           \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        return sval && lval;                                                                                    \
+    }                                                                                                           \
+    template<typename A>                                                                                        \
+    constexpr bool NAME <A> :: ctree_visit_pre(const cvisitor_t& op) const{                                     \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        auto lval = this->left().ctree_visit_pre(op);                                                           \
+        return sval && lval;                                                                                    \
+    }                                                                                                           \
+    template<typename A>                                                                                        \
+    constexpr bool NAME <A> :: ctree_visit_post(const cvisitor_t& op) const{                                    \
+        auto lval = this->left().ctree_visit_post(op);                                                          \
+        auto sval = op(this->name(),this->fields(), this->addr(), this->children());                            \
+        return sval && lval;                                                                                    \
+    }                                                                                                           \
+    template<typename A>                                                                                        \
+    uint64_t NAME <A> :: to_tree(tree::builder& dst)const {                                                     \
+        auto lname= base::left().to_tree(dst);                                                                  \
+        if constexpr(std::is_same<typename base::cfg_t, utils::empty_t>()){                                     \
+            NAME <utils::tree_idx_ref<utils::tree_idx<A>>> tmp({(uint16_t)(dst.next()-lname)});                 \
+            auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
+            return ret;                                                                                         \
+        }                                                                                                       \
+        else{                                                                                                   \
+            NAME <utils::tree_idx_ref<utils::tree_idx<A>>> tmp({(uint16_t)(dst.next()-lname)}, this->cfg);      \
+            auto ret = dst.push(tree::op_t:: NAME, (uint8_t*)&tmp, sizeof(decltype(tmp)));                      \
+            return ret;                                                                                         \
+        }                                                                                                       \
+    }                                                                                                           \
+}}                                                                                                              \
+namespace comptime {                                                                                            \
+    constexpr inline auto NAME(auto&& a){                                                                       \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t>>, "Operator must be derived from unary_op");\
+        return impl::NAME <left_t>(a);                                                                          \
+    };                                                                                                          \
+    constexpr inline auto NAME(auto&& a, const typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t & cfg){                                  \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t,typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t>>, "Operator must be derived from unary_op");\
+        return impl::NAME <left_t>(a,cfg);                                                                      \
+    };                                                                                                          \
+}                                                                                                               \
+namespace polymorphic {                                                                                         \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline auto NAME(auto&& a){                                                                       \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        return utils::dyn_op<Attrs,impl::NAME<left_t>>(a);                                                      \
+    };                                                                                                          \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline auto NAME(auto&& a, const typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t & cfg){                                   \
+        using left_t = std::remove_reference<decltype(a)>::type;                                                \
+        static_assert(std::derived_from<impl:: NAME <left_t>, utils::unary_op<left_t,typename impl::NAME <typename std::remove_reference<decltype(a)>::type>::base::cfg_t>>, "Operator must be derived from unary_op");\
+        return utils::dyn_op<Attrs,impl::NAME <left_t>>(a,cfg);                                                 \
+    };                                                                                                          \
+}                                                                                                               \
+namespace dynamic {                                                                                             \
+    template<typename Attrs=default_attrs>                                                                      \
+    using NAME##_t=utils::dyn_op<Attrs,impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>>>;                    \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
+    (                                                                                                           \
+        std::shared_ptr<utils::base_dyn<Attrs>> a                                                               \
+    ){                                                                                                          \
+        return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a)>>>(a);                               \
+    }                                                                                                           \
+    template<typename Attrs=default_attrs>                                                                      \
+    constexpr inline std::shared_ptr<utils::base_dyn<Attrs>> NAME                                               \
+    (                                                                                                           \
+        std::shared_ptr<utils::base_dyn<Attrs>> a,                                                              \
+        const typename impl::NAME<std::shared_ptr<utils::base_dyn<Attrs>>>::base::cfg_t& cfg                    \
+    ){                                                                                                          \
+        return std::make_shared<utils::dyn_op<Attrs,impl::NAME<decltype(a)>>>(a,cfg);                           \
+    }                                                                                                           \
+}  
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+/// Used to record a binary operator `NAME` across all namespaces and an operator overload for it
+#define sdf_register_operator_2o(NAME, OP)                                                                      \
+sdf_register_operator_2(NAME)                                                                                   \
+namespace comptime {                                                                                            \
+    template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
+    constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
+}                                                                                                               \
+namespace polymorphic {                                                                                         \
+    template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
+    constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
+}                                                                                                               \
+namespace dynamic {                                                                                             \
+    template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
+    constexpr inline auto operator OP (std::shared_ptr<A> a, std::shared_ptr<B> b){return NAME(a,b);}           \
+}                                                                                                               \
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+/// Used to record a unary operator `NAME` across all namespaces and an operator overload for it
+#define sdf_register_operator_1o(NAME, OP)                                                                      \
+sdf_register_operator_1(NAME)                                                                                   \
+namespace comptime {                                                                                            \
+    template <typename A> requires sdf_i<A>                                                                     \
+    constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
+}                                                                                                               \
+namespace polymorphic {                                                                                         \
+    template <typename T> requires sdf_i<A>                                                                     \
+    constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
+}                                                                                                               \
+namespace dynamic {                                                                                             \
+    template <typename A> requires sdf_i<A>                                                                     \
+    constexpr inline auto operator OP (std::shared_ptr<A> a){return NAME(a);}                                   \
+}                                                                                                               \
+
 
 #define FIELD(PARENT, TYPE, WIDGET, NAME, DESC, MIN, MAX, DEF, VALIDATE) \
     {false,field_t::type_##TYPE, field_t::widget_##WIDGET, #NAME, DESC, offsetof(PARENT,NAME), sizeof(NAME), SVal< MIN>, SVal< MAX >, SVal< DEF >, (bool(*)(const void* value))VALIDATE}
@@ -798,8 +788,9 @@ namespace sdf{
 #define PRIMITIVE_TRAIT_SYM to.is_sym={true,true,true};
 #define PRIMITIVE_TRAIT_GOOD to.is_exact_inner=true;to.is_exact_outer=true;to.is_bounded_inner=true;to.is_bounded_outer=true;
 
-//Helpers for serialization                
+/* #endregion */
 
+/* #region sdf-components */
 
 //Basic 2D/3D primitives
 #include "primitives/zero.hpp"
@@ -853,9 +844,13 @@ namespace sdf{
 //#include "operators/shell.hpp"
 //#include "operators/mirror.hpp"
 
+/* #endregion */
+
+/* #region cleanup-preprocessor */
+
 #undef SDF_INTERNALS
 
-/*
+
 #undef sdf_register_primitive
 #undef sdf_register_primitive_ostream
 #undef sdf_register_primitive_xml
@@ -880,7 +875,10 @@ namespace sdf{
 #undef PRIMITIVE_COMMONS
 #undef PRIMITIVE_TRAIT_GOOD
 #undef PRIMITIVE_TRAIT_SYM
-*/
+
+/* #endregion */
+
+/* #region tree_idx_impl */
 
 #define SDF_TREE_DISPATCH_PRIMITIVE(OPCODE, OPERATION, RET) \
 case tree::op_t:: OPCODE: {\
@@ -1016,4 +1014,5 @@ namespace utils{
 #undef SDF_TREE_DISPATCH
 
 
-//#pragma omp end declare target
+/* #endregion Implementation for the tree_idx logic binding underlying functions */
+
