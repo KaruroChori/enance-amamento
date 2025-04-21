@@ -15,6 +15,8 @@ OFFLOAD ?= amd64-linux-unknown
 
 NO_OMP ?= false
 
+USE_USM ?= false
+
 .PHONY: all configure build install dist test clean docs
 
 # Run all steps by default.
@@ -23,7 +25,7 @@ all: configure build install docs
 # Configure step.
 configure:
 	@echo "Configuring project with $(MESON) (build type: $(BUILDTYPE))..."
-	$(MESON) setup $(BUILD_DIR) -Dno-omp=$(NO_OMP) -Doffload-targets=$(OFFLOAD) --reconfigure --prefix=$(PREFIX) --buildtype=$(BUILDTYPE) --native-file $(TOOLCHAIN) 
+	$(MESON) setup $(BUILD_DIR) -Dno-omp=$(NO_OMP) -Duse-usm=$(USE_USM) -Doffload-targets=$(OFFLOAD) --reconfigure --prefix=$(PREFIX) --buildtype=$(BUILDTYPE) --native-file $(TOOLCHAIN) 
 
 # Build step depends on configuration.
 build: configure

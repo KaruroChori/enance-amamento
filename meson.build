@@ -12,16 +12,22 @@ add_global_arguments(
 
 openmp_stub_dep = dependency('openmp_stub')
 
-if get_option('no-omp') == true
+openmp_compile_args = []
+
+if get_option('use-usm')
+  openmp_compile_args += '-D SDF_USE_USM=true'
+endif
+
+if get_option('no-omp')
   deps_no_omp = [openmp_stub_dep]
 
-  openmp_compile_args = [
+  openmp_compile_args += [
     '-D SDF_IS_HOST=true',
   ]
 
 else
   deps_no_omp = []
-  openmp_compile_args = [
+  openmp_compile_args += [
     '-D SDF_IS_HOST=true',
     '-fopenmp',
     '-g',
@@ -29,6 +35,7 @@ else
     '-fopenmp-cuda-mode', '-march=native', '-Xopenmp-target', '-D SDF_IS_HOST=false'
   ]
 endif 
+
 
 #TODO: this override of SDF_IS_HOST is not clean while compiling as it is passed twice for target code.
 
@@ -47,9 +54,6 @@ lua_dep = dependency('lua')
 pugixml_dep = dependency('pugixml', version: '>=1.14')
 vs_templ_dep = dependency('vs_templ', version: '>=0.4.7')
 args_dep = dependency('args')
-
-#png_dep = dependency('libpng')
-#capnproto_dep = dependency('capnp')
 
 subdir('src/lib')
 

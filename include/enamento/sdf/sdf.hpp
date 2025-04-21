@@ -10,6 +10,12 @@
  * 
  */
 
+#ifdef SDF_USE_USM
+    #pragma omp requires unified_shared_memory
+#endif
+
+#pragma 
+
 //TODO: Remove the experimental feature by using a custom implementation
 #include <experimental/type_traits>
 #include <cstdlib>
