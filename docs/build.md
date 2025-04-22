@@ -2,8 +2,8 @@
 
 You will need a recent version of `meson` as then build system, and a proper toolchain compiled with support for OpenMP (make sure it matches your target architecture).  
 At the moment, only clang-21 has been tested and is the one used for development, but 20 should work just fine.  
-`gcc` is not supported/tested, and would require some changes in the build script as its arguments are not the same as for `clang`.  
-If you really want, make sure you are using the special branch with offloading patches for `gcc-14` or `gcc-15`.  
+`gcc` is not supported yet, but preliminary work has been done to use it, please check the instructions later in this document.  
+Make sure you are using a recent version like `gcc-14` or `gcc-15`. There is a special branch with offloading patches, it might be a good idea.  
 
 If no support for OpenMP is available, there is a stub implementation in the subprojects, but it has not been tested nor integrated in the build systems as of yet.  
 Also, while the main library has no external dependency, aside from those directly handled by meson, some utilities like the main UI do.  
@@ -43,6 +43,14 @@ If you want to build a version without omp support at all (it will be very slow)
 
 ```bash
 make run NO_OMP=true
+```
+
+### GCC
+
+Support for GCC is not fully there yet, but you can try to compile it using the following (in case of nvidia devices):
+
+```bash
+make run TOOLCHAIN=platforms/gcc.ini OFFLOAD=nvptx-none
 ```
 
 ## Library configuration

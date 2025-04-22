@@ -2,13 +2,18 @@ project(
   'enance-amamento',
   'cpp',
   version: '0.1.6',
-  default_options: ['warning_level=3', 'cpp_std=c++23'],
+  default_options: ['warning_level=3', 'cpp_std=gnu++23'],
 )
 
-add_global_arguments(
-  ['-Wno-gnu-case-range', '-Wno-zero-length-array', '-Wno-unused-parameter'],
-  language: ['cpp', 'c'],
-)
+cxx = meson.get_compiler('cpp')
+
+
+if (cxx.get_id() == 'clang')
+  add_global_arguments(
+    ['-Wno-gnu-case-range', '-Wno-zero-length-array', '-Wno-unused-parameter'],
+    language: ['cpp', 'c'],
+  )
+endif
 
 openmp_stub_dep = dependency('openmp_stub')
 
@@ -25,7 +30,7 @@ if get_option('no-omp')
     '-D SDF_IS_HOST=true',
   ]
 
-else
+elif (cxx.get_id() == 'clang')
   deps_no_omp = []
   openmp_compile_args += [
     '-D SDF_IS_HOST=true',
@@ -33,6 +38,15 @@ else
     '-g',
     '-fopenmp-targets=' + get_option('offload-targets'),
     '-fopenmp-cuda-mode', '-march=native', '-Xopenmp-target', '-D SDF_IS_HOST=false'
+  ]
+elif (cxx.get_id() == 'gcc')
+  deps_no_omp = []
+  openmp_compile_args += [
+    '-D SDF_IS_HOST=true',
+    '-fopenmp',
+    '-g',
+    '-foffload=' + get_option('offload-targets'),
+    '-march=native', '-foffload-options='+get_option('offload-targets')+'=-DSDF_IS_HOST=false',
   ]
 endif 
 

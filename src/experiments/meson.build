@@ -43,3 +43,14 @@ executable(
     dependencies: [vssdf_dep, deps_no_omp],
     link_with: [],
 )
+
+
+executable(
+    'dist-compute',
+    'test-dist-compute.cpp',
+    install: false,
+    cpp_args: [openmp_compile_args],
+    link_args: [openmp_link_args],
+    dependencies: [vssdf_dep, deps_no_omp],
+    link_with: [],
+)
