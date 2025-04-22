@@ -11,7 +11,7 @@
  */
 
 #ifndef SDF_INTERNALS
-#error Don't import manually, this can only be used internally by the library
+#error "Don't import manually, this can only be used internally by the library"
 #endif
 
 #include "../sdf.hpp"
@@ -58,7 +58,7 @@ namespace sdf{
             constexpr inline static const char* _name = "Material";
 
             constexpr inline static field_t _fields[] = {
-                {false,field_t::type_cfg, field_t::widget_deftype, "material", "Material override", offsetof(Material, cfg)+offsetof(Material::cfg_t, material) , sizeof(base::cfg.material), nullptr, nullptr, SVal<typename L::attrs_t{}>, nullptr}
+                {false,field_t::type_cfg, field_t::widget_deftype, "material", "Material override", offsetof(Material, cfg)+offsetof(typename base::cfg_t, material) , sizeof(base::cfg.material), nullptr, nullptr, SVal<typename L::attrs_t{}>, nullptr}
             };
 
             PRIMITIVE_NORMAL

@@ -12,7 +12,7 @@
 
 
 #ifndef SDF_INTERNALS
-#error Don't import manually, this can only be used internally by the library
+#error "Don't import manually, this can only be used internally by the library"
 #endif
 
 #include <cmath>

@@ -13,6 +13,11 @@ if (cxx.get_id() == 'clang')
     ['-Wno-gnu-case-range', '-Wno-zero-length-array', '-Wno-unused-parameter'],
     language: ['cpp', 'c'],
   )
+elif (cxx.get_id() == 'gcc')
+  add_global_arguments(
+    ['-Wno-pedantic'],
+    language: ['cpp', 'c'],
+  )
 endif
 
 openmp_stub_dep = dependency('openmp_stub')

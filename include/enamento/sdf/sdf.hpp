@@ -757,10 +757,10 @@ namespace dynamic {                                                             
     {true,field_t::type_##TYPE, field_t::widget_##WIDGET, #NAME, DESC, offsetof(PARENT,NAME), sizeof(NAME), nullptr, nullptr, SVal<TYPE{}>, nullptr}
 
 #define FIELD_OP(PARENT, TYPE, WIDGET, NAME, DESC, MIN, MAX, DEF, VALIDATE) \
-    {false,field_t::type_##TYPE, #NAME, field_t::widget_##WIDGET, DESC, /*offsetof(PARENT, cfg)+*/offsetof(PARENT::cfg_t, NAME) , sizeof(base::cfg.NAME), SVal< MIN >, SVal< MAX >, SVal< DEF >, (bool(*)(const void* value))VALIDATE}
+    {false,field_t::type_##TYPE, #NAME, field_t::widget_##WIDGET, DESC, /*offsetof(PARENT, cfg)+*/offsetof(typename base::cfg_t, NAME) , sizeof(base::cfg.NAME), SVal< MIN >, SVal< MAX >, SVal< DEF >, (bool(*)(const void* value))VALIDATE}
 
 #define FIELD_OP_R(PARENT, TYPE, WIDGET, NAME, DESC) \
-    {false,field_t::type_##TYPE, field_t::widget_##WIDGET, #NAME, DESC, /*offsetof(PARENT, cfg)+*/offsetof(PARENT::cfg_t, NAME) , sizeof(base::cfg.NAME), nullptr, nullptr, SVal<TYPE{}>, nullptr}
+    {false,field_t::type_##TYPE, field_t::widget_##WIDGET, #NAME, DESC, /*offsetof(PARENT, cfg)+*/offsetof(typename base::cfg_t, NAME) , sizeof(base::cfg.NAME), nullptr, nullptr, SVal<TYPE{}>, nullptr}
 
 #define PRIMITIVE_NORMAL \
     constexpr inline const char* name()const{return _name;}\

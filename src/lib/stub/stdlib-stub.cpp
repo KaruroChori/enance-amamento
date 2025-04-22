@@ -1,5 +1,3 @@
-#pragma once
-
 /*
     This files contains stubs needed to facilitate adoption of C++ STL parts in offloaded devices.
     Even without libc++ nor exceptions, there is a lot which can be useful in there.
