@@ -1,0 +1,24 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: enance-amamemnto
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: lazy-eggplant
+  - given-names: karurochari
+    affiliation: lazy-eggplant
+    email: public@karurochari.com
+repository-code: 'https://github.com/KaruroChori/enance-amamento'
+abstract: >-
+  A template library for headless rendering of Signed
+  Distance Fields based on OpenMP. 
+keywords:
+  - sdf
+  - headless
+  - gpgpu
+  - openmp
+license: AGPL-3.0-only
