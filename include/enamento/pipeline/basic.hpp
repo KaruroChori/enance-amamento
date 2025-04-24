@@ -151,7 +151,7 @@ struct demo{
         if(out==nullptr)out=this->output;
 
         //First Pass (only one layer in this rendering pipeline)
-        #pragma omp target teams device(device) is_device_ptr(layer_0) is_device_ptr(sobel_base) is_device_ptr(sobel_dilate)
+        #pragma omp target teams device(device) /*is_device_ptr(layer_0) is_device_ptr(sobel_base) is_device_ptr(sobel_dilate) these make amd64 build strange. investigate why?*/
         {
 
             #pragma omp distribute parallel for collapse(2) schedule(static,1)
@@ -164,7 +164,7 @@ struct demo{
         }
 
         //Edge detection
-        #pragma omp target teams device(device) is_device_ptr(layer_0) is_device_ptr(sobel_base) is_device_ptr(sobel_dilate)
+        #pragma omp target teams device(device) 
         {             
             #pragma omp distribute parallel for collapse(2) schedule(static,1)
             for (int i = 0; i < display_height; i++) {
@@ -201,7 +201,7 @@ struct demo{
         }
 
         //Dilate
-        #pragma omp target teams device(device) is_device_ptr(layer_0) is_device_ptr(sobel_base) is_device_ptr(sobel_dilate)
+        #pragma omp target teams device(device) 
         {             
             #pragma omp distribute parallel for collapse(2) schedule(static,1) 
             for (int i = 0; i < display_height; i++) {
@@ -252,7 +252,7 @@ struct demo{
         //u8vec4 *tmp = output;   //For some reason using output directly is illegal. I need a local copy. No idea why.
         #pragma omp target data map(from: out[0:display_width*display_height]) device(device)
         {
-            #pragma omp target teams device(device) is_device_ptr(layer_0) is_device_ptr(sobel_base) is_device_ptr(sobel_dilate)
+            #pragma omp target teams device(device) 
             {             
                 #pragma omp distribute parallel for collapse(2) schedule(static,1)
                 for (int i = 0; i < display_height; i++) {
