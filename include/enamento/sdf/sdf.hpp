@@ -712,11 +712,11 @@ namespace dynamic {                                                             
 sdf_register_operator_2(NAME)                                                                                   \
 namespace comptime {                                                                                            \
     template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
-    constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
+    constexpr inline auto operator OP (A a, B b){return NAME(a,b);}                                             \
 }                                                                                                               \
 namespace polymorphic {                                                                                         \
     template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
-    constexpr inline auto operator OP (const A& a, const B& b){return NAME(a,b);}                               \
+    constexpr inline auto operator OP (A a, B b){return NAME(a,b);}                                             \
 }                                                                                                               \
 namespace dynamic {                                                                                             \
     template <typename A, typename B> requires sdf_i<A> && sdf_i<B>                                             \
@@ -732,11 +732,11 @@ namespace dynamic {                                                             
 sdf_register_operator_1(NAME)                                                                                   \
 namespace comptime {                                                                                            \
     template <typename A> requires sdf_i<A>                                                                     \
-    constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
+    constexpr inline auto operator OP (A a){return NAME(a);}                                                    \
 }                                                                                                               \
 namespace polymorphic {                                                                                         \
     template <typename T> requires sdf_i<A>                                                                     \
-    constexpr inline auto operator OP (const A& a){return NAME(a);}                                             \
+    constexpr inline auto operator OP (A a){return NAME(a);}                                                    \
 }                                                                                                               \
 namespace dynamic {                                                                                             \
     template <typename A> requires sdf_i<A>                                                                     \

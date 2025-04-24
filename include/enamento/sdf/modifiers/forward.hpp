@@ -66,6 +66,15 @@ namespace sdf{
                 //TODO: Possibly revise this one. For now it copies.
                 return this->src.to_tree(dst);
             }
+
+            constexpr inline void* addr(){return (void*)this;}
+            constexpr inline const void* addr()const{return (const void*)this;}
+            constexpr inline size_t children() const{return 0;}                                                     \
+
+            constexpr bool tree_visit_pre(const visitor_t& op){return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool tree_visit_post(const visitor_t& op){return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool ctree_visit_pre(const cvisitor_t& op) const{return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool ctree_visit_post(const cvisitor_t& op) const{return op(this->name(),this->fields(),this->addr(),this->children()); }
         };
 
   
@@ -98,6 +107,16 @@ namespace sdf{
                 //TODO: Possibly revise this one. For now it copies.
                 return src->to_tree(dst);
             }
+
+            //TODO: to be checked.
+            constexpr inline void* addr(){return (void*)this;}
+            constexpr inline const void* addr()const{return (const void*)this;}
+            constexpr inline size_t children() const{return 0;}
+
+            constexpr bool tree_visit_pre(const visitor_t& op){return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool tree_visit_post(const visitor_t& op){return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool ctree_visit_pre(const cvisitor_t& op) const{return op(this->name(),this->fields(),this->addr(),this->children()); }
+            constexpr bool ctree_visit_post(const cvisitor_t& op) const{return op(this->name(),this->fields(),this->addr(),this->children()); }
         };
 
     }}

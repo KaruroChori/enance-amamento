@@ -72,19 +72,11 @@ namespace sdf{
 
     namespace comptime {
         template <typename T> requires sdf_i<T> 
-        constexpr inline auto operator + (const T& a, const glm::vec3& off){return Translate(a,{off});}
+        constexpr inline auto operator + (T a, const glm::vec3& off){return Translate(a,{off});}
     }
     namespace polymorphic {
         template <typename T> requires sdf_i<T> 
-        constexpr inline auto operator + (const T& a, const glm::vec3& off){return Translate(a,{off});}
-    }
-    namespace comptime_base {
-        template <typename T> requires sdf_i<T> 
-        constexpr inline auto operator + (const T& a, const glm::vec3& off){return Translate(a,{off});}
-    }
-    namespace polymorphic_base {
-        template <typename T> requires sdf_i<T> 
-        constexpr inline auto operator + (const T& a, const glm::vec3& off){return Translate(a,{off});}
+        constexpr inline auto operator + (T a, const glm::vec3& off){return Translate(a,{off});}
     }
     namespace dynamic {
         template <typename T> requires sdf_i<T> 

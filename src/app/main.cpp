@@ -51,6 +51,11 @@ class Editor{
 };
 
 int main(int argc, const char** argv) {
+    {
+        using namespace sdf::comptime;
+        auto sdf1 = Sphere({5})+Sphere({5});
+    }
+
     lua_example();
 
     /*#pragma omp target
