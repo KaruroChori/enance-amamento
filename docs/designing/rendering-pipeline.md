@@ -40,3 +40,8 @@ Fifth pass:
 - `0/*` global base group. Nothing special.
 - `511/*` sky group. Special.
 - `*/0` part of the group but fake address. Basically it cannot be addressed externally
+
+## Static + Dynamic
+
+We might want to split computation between a static tree and a dynamic subtree.  
+Basically we use two split framebuffers, where one is updated at each frame; the other is kept unless the scene state has changed (moving camera etc.)

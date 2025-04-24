@@ -1,154 +1,148 @@
 #include <cmath>
+#include <cstddef>
+#include <future>
 #include <omp.h>
 #include <print>
 #include <chrono>
 
 #pragma omp requires unified_shared_memory
 
-
 //Just annoying workaround without lambdas to avoid https://github.com/llvm/llvm-project/issues/136652
-constexpr size_t HEIGHT=40000, WIDTH=80000;
-static uint8_t* data;
 
-auto slice_work(size_t device, float start, float end){
-    if(data==nullptr){
-        std::print("oh nooooo\n");
-        throw "NOOOO";
-    }
-    #pragma omp target teams device(device) 
-    {
-
-        #pragma omp distribute parallel for collapse(2) schedule(static,1)
-        for (int i = (int)(HEIGHT*start); i < (int)(HEIGHT*end); i++) {
-            for (int j = 0; j < WIDTH; j++) {
-                data[i*WIDTH+j]+=std::sqrt(i+j*i)+std::sqrt(j+j*i)+std::pow(j,i);
-            }
-        }
-    }
-
-    return;
+template<typename T>
+concept algorithm_i = requires(const T& self, typename T::slice_t slice, size_t device, const std::vector<float>& iweights){
+    //std::is_same<decltype(self.distance),float>();
+    //std::is_same<decltype(self.fields),typename T::extras_t>();
+    {self(device,slice)} -> std::same_as<void> ;
+    {self.slices(iweights)} -> std::same_as<std::vector<typename T::slice_t>> ;
 };
 
-int main(){
-    data= (uint8_t*) omp_alloc(HEIGHT*WIDTH);
-    const size_t devnum = omp_get_num_devices();
-    struct{
-        float speed;
-        float weight;
-        float max_memory;
-    } devices[devnum];
-    float integral_weights[devnum];
+struct algorithm_t{
+    size_t height=40000, width=80000;
+    uint8_t* data;
 
-    float lambda = 0.1;
 
-    for(auto& device:devices)device={1.0f,1.0f/(float)devnum, INFINITY};
+    struct slice_t{
+        size_t start;
+        size_t end;
+    };
 
-    /*
-        Basically we have to solve the optimization problem:
-            arg_min(weight_i) for max_i(speed_i*weight_i) constrained to sum_i(total_work*weight_i)=total_work
-        Where speed_i is an estimate based on prior runs, or a seeded value.
-        We also have a secondary (softer) constraint to consider:
-            weight_i*total_work < allocable_memory_i
-    */
+    //This current demo implementation is not correct, as some rows will be duplicated. For now that is ok, it is just for testing purposes.
+    std::vector<slice_t> slices(const std::vector<float>& integral_weights) const{
+        std::vector<slice_t> tmp;
+        tmp.reserve(integral_weights.size());
 
-    while(true){
+        for(size_t i = 0; i<integral_weights.size(); i++){
+            tmp.push_back({(size_t)((i>0?integral_weights[i-1]:0)*height),(size_t)(integral_weights[i]*height)});
 
-        //Setup the integral array to alway know absolute slices
-        if(devnum>0)integral_weights[0]=devices[0].weight;
-        for(size_t i = 1; i<devnum ; i++){
-            integral_weights[i]=devices[i].weight+integral_weights[i-1];
         }
-
-        float total_speed = 0;
-        //Cannot use this one. It would be nice to keep code more regular, but it requires OMP_WAIT_POLICY=passive not to be very wasteful. 
-        // So I will be using the std::async version I guess, since that policy cannot be set for each instance separately.
-        #pragma omp parallel for reduction(+:total_speed) schedule(dynamic,1)
-        for(size_t i = 0; i<devnum ; i++){
-            //std::print("{}\n",omp_get_thread_num());
-            auto start = std::chrono::high_resolution_clock::now();
-
-            slice_work(i,(i>0?integral_weights[i-1]:0),integral_weights[i]);
-
-            auto end = std::chrono::high_resolution_clock::now();
-            auto tmp_speed = devices[i].weight/(end-start).count();
-            devices[i].speed=tmp_speed;
-            total_speed+=tmp_speed;
-        }
-
-        //#pragma omp parallel for
-        for(size_t i = 0; i<devnum ; i++){
-            devices[i].weight=(1.f-lambda)*devices[i].weight+lambda*(devices[i].speed/total_speed);
-            printf("%ld %f\n",i, devices[i].weight);
-        }
-
-        //TODO: Implement memory constraints
+        return tmp;
     }
 
-    omp_free(data);
-    return 0;
-}
+    void operator()(size_t device, slice_t slice) const{
+        #pragma omp target teams device(device) 
+        {
+    
+            #pragma omp distribute parallel for collapse(2) schedule(static,1)
+            for (size_t i = slice.start; i < slice.end; i++) {
+                for (size_t j = 0; j < width; j++) {
+                    data[i*width+j]+=std::sqrt(i+j*i)+std::sqrt(j+j*i)+std::pow(j,i);
+                }
+            }
+        }
+    
+        return;
+    }
 
+    algorithm_t(size_t height, size_t width):height(height),width(width){
+        data=(uint8_t*)omp_alloc(height*width);
+        if(data==nullptr){
+            std::print("oh nooooo\n");
+            throw "NOOOO";
+        }
+    }
 
-/*
+    ~algorithm_t(){
+        omp_free(data);
+    }
+};
 
-int main(){
-    data= (uint8_t*) omp_alloc(HEIGHT*WIDTH);
-    const size_t devnum = omp_get_num_devices();
-    struct{
+template<algorithm_i T>
+struct slicer_t{
+    struct device_t{
         float speed;
         float weight;
         float max_memory;
-    } devices[devnum];
-    float integral_weights[devnum];
+    };
 
-    float lambda = 0.1;
+    size_t devices_n;
+    std::vector<device_t> devices;
+    std::vector<float> integral_weights;
+    const T& op;
 
-    for(auto& device:devices)device={1.0f,1.0f/(float)devnum, INFINITY};
+    float lambda;
 
+    slicer_t(const T& op, float lambda=0.1f):op(op),lambda(lambda){
+        devices_n = omp_get_num_devices();
+        devices.resize(devices_n);
+        integral_weights.resize(devices_n);
 
-    while(true){
-        std::future<float> futures[devnum];
+        for(auto& device:devices)device={1.0f,1.0f/(float)devices_n, INFINITY};
+    }
+
+    void operator()(){
+        std::future<float> futures[devices.size()];
+
         //Setup the integral array to alway know absolute slices
-        if(devnum>0)integral_weights[0]=devices[0].weight;
-        for(size_t i = 1; i<devnum ; i++){
+        if(devices_n>0)integral_weights[0]=devices[0].weight;
+        for(size_t i = 1; i<devices_n ; i++){
             integral_weights[i]=devices[i].weight+integral_weights[i-1];
         }
 
-        float total_speed = 0;
-        //#pragma omp parallel for reduction(+:total_speed) schedule(dynamic,1)
-        for(size_t i = 0; i<devnum ; i++){
+        auto slices = op.slices(integral_weights);
+
+        for(size_t i = 0; i<devices_n ; i++){
+
             futures[i] = std::async(std::launch::async,[&,i](){
                 auto start = std::chrono::high_resolution_clock::now();
 
-                slice_work(i,(i>0?integral_weights[i-1]:0),integral_weights[i]);
+                op(i,slices[i]);
     
                 auto end = std::chrono::high_resolution_clock::now();
                 auto tmp_speed = devices[i].weight/(end-start).count();
                 return tmp_speed;
             });
-            //std::print("{}\n",omp_get_thread_num());
         }
 
+
+        float total_speed = 0;
         {
             int w = 0;
-            for (auto &fut : futures) {
-                auto v = fut.get();
+            for (auto &future : futures) {
+                auto v = future.get();
                 devices[w].speed=v;
                 total_speed+=v;
                 w++;
             }
         }
         
-        //#pragma omp parallel for
-        for(size_t i = 0; i<devnum ; i++){
+        for(size_t i = 0; i<devices_n ; i++){
             devices[i].weight=(1.f-lambda)*devices[i].weight+lambda*(devices[i].speed/total_speed);
-            printf("%ld %f\n",i, devices[i].weight);
+            printf("%ld %f %d\n",i, devices[i].weight, op.data[5]);
         }
 
         //TODO: Implement memory constraints
     }
+};
 
-    omp_free(data);
+
+int main(){
+    algorithm_t instance(40000,80000);
+
+    slicer_t slicer(instance);
+    while(true){
+        slicer();
+    }
+
     return 0;
 }
-*/
