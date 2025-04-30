@@ -139,16 +139,16 @@ namespace sdf{
             virtual constexpr inline fields_t fields(const path_t* steps) const override{return static_cast<const T<Attrs, Args...>*>(this)->fields(steps);}
             virtual constexpr inline visibility_t is_visible() const override{return static_cast<const T<Attrs, Args...>*>(this)->is_visible();}
 
-            virtual constexpr inline bool tree_visit_pre(const visitor_t& op)override{return T<Attrs,Args...>::tree_visit_pre(op);};
-            virtual constexpr inline bool tree_visit_post(const visitor_t& op)override{return T<Attrs,Args...>::tree_visit_post(op);};
-            virtual constexpr inline bool ctree_visit_pre(const cvisitor_t& op)const override{return T<Attrs,Args...>::ctree_visit_pre(op);};
-            virtual constexpr inline bool ctree_visit_post(const cvisitor_t& op)const override{return T<Attrs,Args...>::ctree_visit_post(op);};
+            virtual constexpr inline bool tree_visit_pre(const visitor_t& op)override{return static_cast<T<Attrs, Args...>*>(this)->tree_visit_pre(op);};
+            virtual constexpr inline bool tree_visit_post(const visitor_t& op)override{return static_cast<T<Attrs, Args...>*>(this)->tree_visit_post(op);};
+            virtual constexpr inline bool ctree_visit_pre(const cvisitor_t& op)const override{return static_cast<const T<Attrs, Args...>*>(this)->ctree_visit_pre(op);};
+            virtual constexpr inline bool ctree_visit_post(const cvisitor_t& op)const override{return static_cast<const T<Attrs, Args...>*>(this)->ctree_visit_post(op);};
 
-            virtual constexpr inline void* addr()override{return T<Attrs,Args...>::addr();}
-            virtual constexpr inline const void* addr()const override{return T<Attrs,Args...>::addr();}
-            virtual constexpr inline size_t children() const override{return T<Attrs,Args...>::children();}
+            virtual constexpr inline void* addr()override{return static_cast<T<Attrs, Args...>*>(this)->addr();}
+            virtual constexpr inline const void* addr()const override{return static_cast<const T<Attrs, Args...>*>(this)->addr();}
+            virtual constexpr inline size_t children() const override{return static_cast<const T<Attrs, Args...>*>(this)->children();}
 
-            virtual uint64_t to_tree(tree::builder& dst)const override{return T<Attrs,Args...>::to_tree(dst);};
+            virtual uint64_t to_tree(tree::builder& dst)const override{return static_cast<const T<Attrs, Args...>*>(this)->to_tree(dst);};
         };
 
         template <typename Attrs, typename T> requires sdf_i<T> 

@@ -54,3 +54,13 @@ executable(
     dependencies: [vssdf_dep, deps_no_omp],
     link_with: [],
 )
+
+executable(
+    'xml-parser',
+    'xml-parser.cpp',
+    install: false,
+    cpp_args: [],
+    link_args: [],
+    dependencies: [],
+    link_with: [],
+)
