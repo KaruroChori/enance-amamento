@@ -15,17 +15,28 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <print>
 #include <stack>
 #include <string>
 #include <string_view>
 #include <expected>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
 
 namespace xml{
 typedef std::ptrdiff_t delta_ptr_t ;
+
+struct sv{
+    delta_ptr_t  base;
+    size_t       length;
+
+    sv(delta_ptr_t b, size_t len):base(b),length(len){}
+    sv(void* offset, std::string_view v){base=((uint8_t*)v.data()-(uint8_t*)offset);length=v.length();}
+};
 
 struct guard_t{
     bool used = false;
@@ -77,7 +88,7 @@ enum struct type_t{
 namespace serialize{
     //https://stackoverflow.com/questions/1091945/what-characters-do-i-need-to-escape-in-xml-documents
     //An attempt will be made to keep the input string_view, unless escaping is needed.
-    
+
     typedef std::optional<std::variant<std::string,std::string_view>> ret_t;
 
     constexpr std::optional<std::string_view> validate_xml_label(std::string_view str){
@@ -86,7 +97,10 @@ namespace serialize{
             if(pos==0 && (c=='_' or (c>'a' && c<'z') or (c>'A' && c<'Z'))){/*OK*/}
             //In theory some intervals of utf8 should be negated. But this filter is good enough for now.
             else if(pos!=0 && (c=='_' or c=='.' or c=='-' or (c>'0' && c<'9') or (c>'a' && c<'z') or (c>'A' && c<'Z') or (c>127))){/*OK*/}
-            else return {};
+            else{
+                std::print("{} @ pos {}----- {} {} {} \n",(int)c, pos, str, (void*)str.data(), str.length());
+                return {};
+            }
             pos++;
         }
         return str;
@@ -196,9 +210,9 @@ namespace serialize{
 template<typename T>
 concept thing_i = requires(T self){
     {self.type()} -> std::same_as<type_t>;
-    {self.ns()} -> std::same_as<std::expected<std::string_view,feature_t>>;
-    {self.name()} -> std::same_as<std::expected<std::string_view,feature_t>>;
-    {self.value()} -> std::same_as<std::expected<std::string_view,feature_t>>;
+    {self.ns()} -> std::same_as<std::expected<sv,feature_t>>;
+    {self.name()} -> std::same_as<std::expected<sv,feature_t>>;
+    {self.value()} -> std::same_as<std::expected<sv,feature_t>>;
 
     {self.children()} -> std::same_as<std::expected<std::pair<const unknown_t*, const unknown_t*>,feature_t>>;
     {self.attrs()} -> std::same_as<std::expected<std::pair<const attr_t*, const attr_t*>,feature_t>>;
@@ -224,9 +238,9 @@ struct base_t{
 
     constexpr inline type_t type() const {return _type;};
 
-    constexpr inline std::expected<std::string_view,feature_t> ns() const {return static_cast<const T*>(this)->ns();}
-    constexpr inline std::expected<std::string_view,feature_t> name() const {return static_cast<const T*>(this)->name();}
-    constexpr inline std::expected<std::string_view,feature_t> value() const {return static_cast<const T*>(this)->value();}
+    constexpr inline std::expected<sv,feature_t> ns() const {return static_cast<const T*>(this)->ns();}
+    constexpr inline std::expected<sv,feature_t> name() const {return static_cast<const T*>(this)->name();}
+    constexpr inline std::expected<sv,feature_t> value() const {return static_cast<const T*>(this)->value();}
 
     constexpr inline std::expected<std::pair<const unknown_t*, const unknown_t*>,feature_t> children() const {return static_cast<const T*>(this)->children();}
     constexpr inline std::expected<std::pair<const attr_t*, const attr_t*>,feature_t> attrs() const {return static_cast<const T*>(this)->attrs();}
@@ -253,20 +267,20 @@ struct base_t{
 
 struct attr_t{
     private:
-    std::string_view _ns;
-    std::string_view _name;
-    std::string_view _value;
+    sv _ns;
+    sv _name;
+    sv _value;
 
     public:
 
-    constexpr inline attr_t(std::string_view _ns, std::string_view _name, std::string_view _value):
-        _ns(*serialize::validate_xml_label(_ns)),
-        _name(*serialize::validate_xml_label(_name)),
-        _value(_value){}
+    constexpr inline attr_t(void* offset, std::string_view _ns, std::string_view _name, std::string_view _value):
+        _ns(offset,*serialize::validate_xml_label(_ns)),
+        _name(offset,*serialize::validate_xml_label(_name)),
+        _value(offset,_value){}
 
-    constexpr inline std::expected<std::string_view,feature_t> ns() const {return _ns;}
-    constexpr inline std::expected<std::string_view,feature_t> name() const {return _name;}
-    constexpr inline std::expected<std::string_view,feature_t> value() const {return _value;}
+    constexpr inline std::expected<sv,feature_t> ns() const {return _ns;}
+    constexpr inline std::expected<sv,feature_t> name() const {return _name;}
+    constexpr inline std::expected<sv,feature_t> value() const {return _value;}
     
 };
 
@@ -281,13 +295,13 @@ struct node_t : base_t<node_t>{
 
     size_t      attrs_count;
 
-    std::string_view _ns;
-    std::string_view _name;
+    sv _ns;
+    sv _name;
 
-    constexpr inline node_t(node_t* _parent, std::string_view _ns, std::string_view _name):
+    constexpr inline node_t(void* offset, node_t* _parent, std::string_view _ns, std::string_view _name):
         _parent((uint8_t*)_parent-(uint8_t*)this),
-        _ns(*serialize::validate_xml_label(_ns)),
-        _name(*serialize::validate_xml_label(_name))
+        _ns(offset,*serialize::validate_xml_label(_ns)),
+        _name(offset,*serialize::validate_xml_label(_name))
     {
         _size=0;
         attrs_count=0;
@@ -302,9 +316,9 @@ struct node_t : base_t<node_t>{
     using base_t::type;
     
     constexpr static inline type_t deftype() {return type_t::NODE;};
-    constexpr inline std::expected<std::string_view,feature_t> ns() const {return _ns;}
-    constexpr inline std::expected<std::string_view,feature_t> name() const {return _name;}
-    constexpr inline std::expected<std::string_view,feature_t> value() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
+    constexpr inline std::expected<sv,feature_t> ns() const {return _ns;}
+    constexpr inline std::expected<sv,feature_t> name() const {return _name;}
+    constexpr inline std::expected<sv,feature_t> value() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
 
     constexpr inline std::expected<std::pair<const unknown_t*, const unknown_t*>,feature_t> children() const {
         return std::pair{
@@ -336,9 +350,11 @@ struct node_t : base_t<node_t>{
     constexpr inline bool has_prev() const {return _prev!=0;}
     constexpr inline bool has_next() const {return _next!=0;}
 
+    /*
     constexpr inline std::string path_h() const {
         return std::format("{}{}{}", _ns, _ns==""?"":":", _name);
     }
+    */
     
     friend Builder;
     friend Tree;
@@ -353,7 +369,7 @@ struct leaf_t : base_t<T>{
     delta_ptr_t _prev;
     // delta_ptr_t _next; not needed. Can be statically determined by its size and the children information of the parent.
 
-    std::string_view _value;
+    sv _value;
 
     constexpr inline void set_parent(node_t* parent){_parent=(uint8_t*)parent-(uint8_t*)this;}
     constexpr inline void set_prev(unknown_t* prev){_prev=(uint8_t*)prev-(uint8_t*)this;}
@@ -362,15 +378,15 @@ struct leaf_t : base_t<T>{
 
     protected:
     
-    constexpr leaf_t(std::string_view value):_value(value){}
+    constexpr leaf_t(void* offset, std::string_view value):_value(offset,value){}
 
     public:
 
     using base_t<T>::type;
 
-    constexpr inline std::expected<std::string_view,feature_t> ns() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
-    constexpr inline std::expected<std::string_view,feature_t> name() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
-    constexpr inline std::expected<std::string_view,feature_t> value() const {return _value;}
+    constexpr inline std::expected<sv,feature_t> ns() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
+    constexpr inline std::expected<sv,feature_t> name() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
+    constexpr inline std::expected<sv,feature_t> value() const {return _value;}
 
     constexpr inline std::expected<std::pair<const unknown_t*, const unknown_t*>,feature_t> children() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
     constexpr inline std::expected<std::pair<const attr_t*, const attr_t*>,feature_t> attrs() const {return std::unexpected(feature_t::NOT_SUPPORTED);}
@@ -389,7 +405,7 @@ struct leaf_t : base_t<T>{
 };
 
 struct comment_t : leaf_t<comment_t>{
-    comment_t(std::string_view value):leaf_t(value){}
+    comment_t(void* offset, std::string_view value):leaf_t(offset, value){}
     constexpr static inline type_t deftype() {return type_t::COMMENT;};
 
     constexpr inline std::string path_h() const { return std::format("#comment"); }
@@ -399,7 +415,7 @@ struct comment_t : leaf_t<comment_t>{
 };
 
 struct cdata_t : leaf_t<cdata_t>{
-    cdata_t(std::string_view value):leaf_t(value){}
+    cdata_t(void* offset, std::string_view value):leaf_t(offset, value){}
     constexpr static inline type_t deftype() {return type_t::CDATA;};
 
     constexpr inline std::string path_h() const { return std::format("#cdata"); }
@@ -409,7 +425,7 @@ struct cdata_t : leaf_t<cdata_t>{
 };
 
 struct text_t : leaf_t<text_t>{
-    text_t(std::string_view value):leaf_t(value){}
+    text_t(void* offset, std::string_view value):leaf_t(offset, value){}
     constexpr static inline type_t deftype() {return type_t::TEXT;};
 
     constexpr inline std::string path_h() const { return std::format("#text"); }
@@ -419,7 +435,7 @@ struct text_t : leaf_t<text_t>{
 };
 
 struct proc_t : leaf_t<proc_t>{
-    proc_t(std::string_view value):leaf_t(value){}
+    proc_t(void* offset, std::string_view value):leaf_t(offset, value){}
     constexpr static inline type_t deftype() {return type_t::PROC;};
 
     constexpr inline std::string path_h() const { return std::format("#proc"); }
@@ -429,7 +445,7 @@ struct proc_t : leaf_t<proc_t>{
 };
 
 struct inject_t : leaf_t<inject_t>{
-    inject_t(std::string_view value):leaf_t(value){}
+    inject_t(void* offset, std::string_view value):leaf_t(offset, value){}
     constexpr static inline type_t deftype() {return type_t::INJECT;};
 
     constexpr inline std::string path_h() const { return std::format("#leaf"); }
@@ -480,9 +496,9 @@ struct unknown_t : base_t<unknown_t>{
 
     constexpr static inline type_t deftype() {return type_t::UNKNOWN;};
 
-    constexpr std::expected<std::string_view,feature_t> ns() const {CDISPATCH(ns(),std::terminate());}
-    constexpr std::expected<std::string_view,feature_t> name() const {CDISPATCH(name(),std::terminate());}
-    constexpr std::expected<std::string_view,feature_t> value() const {CDISPATCH(value(),std::terminate());}
+    constexpr std::expected<sv,feature_t> ns() const {CDISPATCH(ns(),std::terminate());}
+    constexpr std::expected<sv,feature_t> name() const {CDISPATCH(name(),std::terminate());}
+    constexpr std::expected<sv,feature_t> value() const {CDISPATCH(value(),std::terminate());}
 
     constexpr std::expected<std::pair<const unknown_t*, const unknown_t*>,feature_t> children() const {CDISPATCH(children(),std::terminate());}
     constexpr std::expected<std::pair<const attr_t*, const attr_t*>,feature_t> attrs() const {CDISPATCH(attrs(),std::terminate());}
@@ -593,9 +609,13 @@ constexpr auto base_t<T>::attrs_fwd() const{
 
 struct Tree{
     std::vector<uint8_t> buffer;
+    std::vector<uint8_t> symbols;
     const node_t& root;
+    void* label_offset;
 
-    Tree(std::vector<uint8_t>&& src):buffer(src),root(*(node_t*)src.data()){}
+    Tree(std::vector<uint8_t>&& src):buffer(src),symbols({}),root(*(node_t*)src.data()),label_offset(nullptr){}
+
+    Tree(std::vector<uint8_t>&& src, std::vector<uint8_t>&& sym):buffer(src),symbols(sym),root(*(node_t*)src.data()),label_offset(symbols.data()){}
 
     /**
      * @brief Reorder (in-place) children of a node based on a custom ordering criterion.
@@ -642,60 +662,64 @@ struct Tree{
         return print_h(out, cfg, (const unknown_t*)&root);
     }
 
+    inline std::string_view rsv(sv s) const{
+        return std::string_view(s.base+(char*)label_offset,s.base+(char*)label_offset+s.length);
+    }
+
     private:
     //TODO: at some point, convert it not to be recursive.
-    static bool print_h(std::ostream& out, const print_cfg_t& cfg = {}, const unknown_t* ptr=nullptr){
+    bool print_h(std::ostream& out, const print_cfg_t& cfg = {}, const unknown_t* ptr=nullptr) const{
         if(ptr->type()==type_t::NODE){
             if(ptr->children()->first==ptr->children()->second){
-                out << std::format("<{}{}{}", *ptr->ns(), ptr->ns()==""?"":":", *ptr->name());
+                out << std::format("<{}{}{}", rsv(*ptr->ns()), rsv(*ptr->ns())==""?"":":", rsv(*ptr->name()));
                 for(auto& i : ptr->attrs_fwd()){
-                    auto t = serialize::to_xml_attr_2(*i.value());
+                    auto t = serialize::to_xml_attr_2(rsv(*i.value()));
                     if(!t.has_value()){/*TODO: Error*/}
                     auto tt = t.value_or(std::string_view(""));
                     std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
-                    out << std::format(" {}{}{}=\"{}\"", *i.ns(), *i.ns()==""?"":":", *i.name(), sv);
+                    out << std::format(" {}{}{}=\"{}\"", rsv(*i.ns()), rsv(*i.ns())==""?"":":", rsv(*i.name()), sv);
                 }
                 out << "/>";
             }
             else{
-                out << std::format("<{}{}{}", *ptr->ns(), ptr->ns()==""?"":":", *ptr->name());
+                out << std::format("<{}{}{}", rsv(*ptr->ns()), rsv(*ptr->ns())==""?"":":", rsv(*ptr->name()));
                 for(auto& i : ptr->attrs_fwd()){
-                    auto t = serialize::to_xml_attr_2(*i.value());
+                    auto t = serialize::to_xml_attr_2(rsv(*i.value()));
                     if(!t.has_value()){/*TODO: Error*/}
                     auto tt = t.value_or(std::string_view(""));
                     std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
-                    out << std::format(" {}{}{}=\"{}\"", *i.ns(), *i.ns()==""?"":":", *i.name(), sv);
+                    out << std::format(" {}{}{}=\"{}\"", rsv(*i.ns()), rsv(*i.ns())==""?"":":", rsv(*i.name()), sv);
                 }
                 out << ">";
                 for(auto& i : ptr->children_fwd()){
                     print_h(out,cfg,&i);
                 }
-                out << std::format("</{}{}{}>", *ptr->ns(), ptr->ns()==""?"":":", *ptr->name());
+                out << std::format("</{}{}{}>", rsv(*ptr->ns()), rsv(*ptr->ns())==""?"":":", rsv(*ptr->name()));
             }
         }
         else if(ptr->type()==type_t::CDATA){
-            auto t = serialize::to_xml_cdata(*ptr->value());
+            auto t = serialize::to_xml_cdata(rsv(*ptr->value()));
             if(!t.has_value()){/*TODO: Error*/}
             auto tt = t.value_or(std::string_view(""));
             std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
             out << std::format("<![CDATA[{}]]>",sv);
         }
         else if(ptr->type()==type_t::COMMENT){
-            auto t = serialize::to_xml_comment(*ptr->value());
+            auto t = serialize::to_xml_comment(rsv(*ptr->value()));
             if(!t.has_value()){/*TODO: Error*/}
             auto tt = t.value_or(std::string_view(""));
             std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
             out << std::format("<!--{}-->",sv);
         }
         else if(ptr->type()==type_t::TEXT){
-            auto t = serialize::to_xml_text(*ptr->value());
+            auto t = serialize::to_xml_text(rsv(*ptr->value()));
             if(!t.has_value()){/*TODO: Error*/}
             auto tt = t.value_or(std::string_view(""));
             std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
             out << std::format("{}",sv);
         }
         else if(ptr->type()==type_t::PROC){
-            auto t = serialize::to_xml_proc(*ptr->value());
+            auto t = serialize::to_xml_proc(rsv(*ptr->value()));
             if(!t.has_value()){/*TODO: Error*/}
             auto tt = t.value_or(std::string_view(""));
             std::string_view sv = std::holds_alternative<std::string>(tt)?std::get<std::string>(tt):std::get<std::string_view>(tt);
@@ -708,6 +732,10 @@ struct Tree{
     };
 };
 
+/**
+ * @brief Helper class to build an XML tree via commands.
+ * 
+ */
 struct Builder{
     enum struct error_t{
         OK,
@@ -721,7 +749,7 @@ struct Builder{
     std::vector<uint8_t> buffer;
     bool open = true;
     bool attribute_block = false;   //True after a begin to add attributes. It is automatically closed when any other command is triggered.
-
+    
     std::stack<std::pair<ptrdiff_t,ptrdiff_t>> stack;
 
     template<typename T>
@@ -735,7 +763,7 @@ struct Builder{
 
         unknown_t* prev = old_ctx.second!=-1?(unknown_t*)(buffer.data()+old_ctx.second):nullptr;
 
-        T* tmp_node = new ((node_t*) & (uint8_t&) *( buffer.end()-sizeof(T) )) T(value);
+        T* tmp_node = new ((node_t*) & (uint8_t&) *( buffer.end()-sizeof(T) )) T(label_offset,value);
 
         if(prev!=nullptr){
             prev->set_next((unknown_t*)tmp_node);
@@ -746,6 +774,16 @@ struct Builder{
         return error_t::OK;
     }
 
+    protected:
+    void* label_offset = nullptr;
+
+    std::expected<Tree,error_t> close(std::vector<uint8_t>&& symbols){
+        if(open==false)return std::unexpected(error_t::TREE_CLOSED);
+        open=false;
+        if(stack.size()!=1)return std::unexpected(error_t::MISFORMED);
+        stack.pop();
+        return Tree(std::move(buffer),std::move(symbols));
+    }
 
     public:
 
@@ -764,7 +802,7 @@ struct Builder{
         unknown_t* prev = old_ctx.second!=-1?(unknown_t*)(buffer.data()+old_ctx.second):nullptr;
 
         //Emplace node
-        node_t* tmp_node = new ((node_t*) & (uint8_t&) *( buffer.end()-sizeof(node_t) )) node_t(parent,ns,name);
+        node_t* tmp_node = new ((node_t*) & (uint8_t&) *( buffer.end()-sizeof(node_t) )) node_t(label_offset,parent,ns,name);
 
         if(prev!=nullptr){
             prev->set_next((unknown_t*)tmp_node);
@@ -804,7 +842,7 @@ struct Builder{
         node_t* parent = (node_t*)(buffer.data()+old_ctx.first);
 
         //Emplace node
-        new ((attr_t*) & (uint8_t&) *( buffer.end()-sizeof(attr_t) )) attr_t(ns,name,value);
+        new ((attr_t*) & (uint8_t&) *( buffer.end()-sizeof(attr_t) )) attr_t(label_offset,ns,name,value);
 
         parent->attrs_count++;
 
@@ -823,17 +861,97 @@ struct Builder{
         open=false;
         if(stack.size()!=1)return std::unexpected(error_t::MISFORMED);
         stack.pop();
-        return Tree(std::move(buffer));
+        return Tree(std::move(buffer),{});
+    }
+
+};
+
+/**
+ * @brief Wrapper of `Builder` to compress labels before usage, reducing the final memory footprint.
+ * 
+ */
+struct BuilderCompressed : protected Builder{
+    private:
+    std::unordered_set<sv, std::function<uint64_t(sv)>,std::function<bool(sv, sv)>> idx_symbols;
+    std::vector<uint8_t> symbols;
+
+    inline std::string_view rsv(sv s) const{
+        return std::string_view(s.base+(char*)label_offset,s.base+(char*)label_offset+s.length);
+    }
+  
+    sv symbol(std::string_view s){
+        auto it = idx_symbols.find(sv(label_offset,s));
+
+        if(it==idx_symbols.end()){
+            symbols.insert(symbols.end(),s.begin(),s.end());
+            //std::print("{}\n",std::string_view((char*)symbols.data(),(char*)symbols.data()+symbols.size()));
+            label_offset=symbols.data();    //Keeep this updated so that when sv are used they are always relative.
+
+            sv ret(symbols.size()-s.length(),s.length());
+            auto it = idx_symbols.insert(ret); 
+            return *it.first;
+        }
+        else{
+            return *it;
+        }
+    }
+
+    public:
+
+
+
+    inline BuilderCompressed():idx_symbols(64,
+        [this](sv a){return std::hash<std::string_view>{}(rsv(a));},
+        [this](sv a, sv b){return rsv(a)==rsv(b);}),symbols(){
+            label_offset=symbols.data(); 
+    }
+
+    inline error_t begin(std::string_view name, std::string_view ns=""){
+        return Builder::begin(rsv(symbol(name)),rsv(symbol(ns)));
+    }
+    inline error_t end(){
+        return Builder::end();
+    }
+    inline error_t attr(std::string_view name, std::string_view value, std::string_view ns=""){
+        //symbol(value);      //Without this 03 fails... why?
+        return Builder::attr(rsv(symbol(name)),rsv( symbol(value)),rsv(symbol(ns)));
+    }
+ 
+    inline error_t text(std::string_view value){
+        return Builder::text(rsv( symbol(value)));
+    }
+    inline error_t comment(std::string_view value){
+        return Builder::comment(rsv( symbol(value)));
+    }
+    inline error_t cdata(std::string_view value){
+        return Builder::cdata(rsv( symbol(value)));
+    }
+    inline error_t proc(std::string_view value){
+        return Builder::proc(rsv( symbol(value)));
+    }
+    inline error_t inject(std::string_view value){
+        return Builder::inject(rsv( symbol(value)));
+    }
+
+    std::expected<Tree,error_t> close(){
+        idx_symbols.clear();
+        return Builder::close(std::move(symbols));
     }
 };
 
 struct Parser {};
 
+
+struct ParserCompressed : protected Parser{
+
+};
+
 }
 
 
 int main(){
-    xml::Builder build;
+    xml::BuilderCompressed build;
+
     build.begin("hello");
         build.attr("op1", "v'>&al1");
         build.attr("op2", "val1", "w");
@@ -855,10 +973,9 @@ int main(){
         
         build.end();
     build.end();
-
     auto tree = *build.close();
     auto limits = *tree.root.children();
-    std::print("{} {}\n",*tree.root.name(),(uint8_t*)limits.second-(uint8_t*)limits.first);
+    std::print("{} {}\n",tree.rsv(*tree.root.name()),(uint8_t*)limits.second-(uint8_t*)limits.first);
     /*for(auto i = limits.first;i<limits.second;i=*i->next()){
         std::print("{}, {}\n",(long)i,(long)limits.second);
         std::print("{} \n",*i->name());
