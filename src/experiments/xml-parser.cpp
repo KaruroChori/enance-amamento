@@ -36,22 +36,8 @@ struct sv{
 
     sv(delta_ptr_t b, size_t len):base(b),length(len){}
     sv(void* offset, std::string_view v){base=((uint8_t*)v.data()-(uint8_t*)offset);length=v.length();}
-};
 
-struct guard_t{
-    bool used = false;
-    struct guard_handle_t{
-        guard_t& ref;
-
-        guard_handle_t(guard_t& ref):ref(ref){
-            assert(ref.used==false);
-            ref.used=true;
-        }
-        ~guard_handle_t(){
-            ref.used=false;
-        }
-    };
-    guard_handle_t use(){return guard_handle_t(*this);}
+    sv()=delete;
 };
 
 struct node_t;
@@ -633,7 +619,7 @@ struct Tree{
      * @param fn Criterion to determine the order of nodes. -1 for left<right, 0 for equals, 1 for left>right
      * @return true if the operation is successful
      */
-    bool reorder_attrs(const node_t* ref, const std::function<int(const attr_t*, const attr_t*)>& fn){return false;}
+    bool reorder(const node_t* ref, const std::function<int(const attr_t*, const attr_t*)>& fn){return false;}
 
     /**
      * @brief 
@@ -875,20 +861,29 @@ struct BuilderCompressed : protected Builder{
     std::unordered_set<sv, std::function<uint64_t(sv)>,std::function<bool(sv, sv)>> idx_symbols;
     std::vector<uint8_t> symbols;
 
-    inline std::string_view rsv(sv s) const{
+    /**
+     * @brief 
+     * NOTICE! The generated string_views have a very narrow lifetime. As symbols changes they are done.
+     * Do not let them survive beyon the next change to symbols!
+     * @param s 
+     * @return std::string_view 
+     */
+    inline std::string_view rsv(sv s){
         return std::string_view(s.base+(char*)label_offset,s.base+(char*)label_offset+s.length);
     }
   
     sv symbol(std::string_view s){
+        if(s.length()==0)return {0,0};
+
         auto it = idx_symbols.find(sv(label_offset,s));
 
         if(it==idx_symbols.end()){
             symbols.insert(symbols.end(),s.begin(),s.end());
-            //std::print("{}\n",std::string_view((char*)symbols.data(),(char*)symbols.data()+symbols.size()));
             label_offset=symbols.data();    //Keeep this updated so that when sv are used they are always relative.
 
             sv ret(symbols.size()-s.length(),s.length());
             auto it = idx_symbols.insert(ret); 
+            if(it.second==false)throw "NOOOOO";
             return *it.first;
         }
         else{
@@ -907,14 +902,15 @@ struct BuilderCompressed : protected Builder{
     }
 
     inline error_t begin(std::string_view name, std::string_view ns=""){
-        return Builder::begin(rsv(symbol(name)),rsv(symbol(ns)));
+        auto a =symbol(name), b = symbol(ns);
+        return Builder::begin(rsv(a),rsv(b));
     }
     inline error_t end(){
         return Builder::end();
     }
     inline error_t attr(std::string_view name, std::string_view value, std::string_view ns=""){
-        //symbol(value);      //Without this 03 fails... why?
-        return Builder::attr(rsv(symbol(name)),rsv( symbol(value)),rsv(symbol(ns)));
+        auto a =symbol(name), b = symbol(value), c = symbol(ns);
+        return Builder::attr(rsv(a),rsv(b),rsv(c));
     }
  
     inline error_t text(std::string_view value){
