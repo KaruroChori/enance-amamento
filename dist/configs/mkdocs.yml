@@ -8,11 +8,14 @@ theme:
   custom_dir: ./
   logo:
 markdown_extensions:
-  - def_list
+  - footnotes
+  - attr_list
+  - md_in_html
   - admonition
   - pymdownx.tilde
   - pymdownx.tasklist
   - mdx_truly_sane_lists
+  - sane_lists
   - smarty
   - toc:
       permalink: "#"

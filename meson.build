@@ -71,10 +71,12 @@ imgui_dep = dependency('imgui')
 implot_dep = dependency('implot')
 lua_dep = dependency('lua')
 pugixml_dep = dependency('pugixml', version: '>=1.14')
+vs_xml_dep = dependency('vs_xml')
 vs_templ_dep = dependency('vs_templ', version: '>=0.4.7')
 args_dep = dependency('args')
 
 subdir('src/lib')
+subdir('src/gen-schemas')
 
 if get_option('minimal') == false
   subdir('src/app')
